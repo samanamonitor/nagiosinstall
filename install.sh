@@ -14,6 +14,8 @@ install_lxc() {
       yum -y install lxc lxc-templates lxc-extra
       systemctl enable lxc.service
       echo "Installed LXC containers."
+   else
+      echo "LXC already installed."
    fi
 }
 
@@ -21,6 +23,9 @@ enable_ipforward() {
    if ! grep -e "^net.ipv4.ip_forward\s*=\s*1" /etc/sysctl.conf >/dev/null; then 
       echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
       echo "Enabled IP Forwarding."
+      sysctl -a
+   else
+      echo "IP Forwarding already configured."
    fi
 }
 
@@ -33,7 +38,7 @@ set_ip() {
    GATEWAY=$6
 
    if [ ! -z $GATEWAY ]; then
-      $GATEWAY="GATEWAY=${GATEWAY}"
+      GATEWAY="GATEWAY=${GATEWAY}"
    fi
 
    cat include/ifcfg.template | \
@@ -67,13 +72,16 @@ setup_host_network() {
    if [ ! -f /etc/sysconfig/network-scripts/ifcfg-${IFCONTAINERS} ]; then
       set_ip $IFCONTAINERS /etc/sysconfig/network-scripts Bridge $HOSTIP $HOSTMASK
       setup_firewall $IFCONTAINERS $IFOUT
+      ifup virbr0
+      echo "Finished configuring host network."
+   else
+      echo "Host network already configured."
    fi
 }
 
 install_lxc
 enable_ipforward
 setup_host_network virbr0 ens160 $H_IP $H_NETMASK
-ifup virbr0
 
 echo "Creating Container $CONTAINER ..."
 lxc-create -t centos -n $CONTAINER
@@ -103,8 +111,9 @@ if ! dig mirrors.fedoraproject.org | grep "NOERROR">/dev/null; then
 fi
 lxc-start -n $CONTAINER -d
 echo "Started Container"
+sleep 10
 echo "Starting to install packages..."
-lxc-attach -n $CONTAINER -- /usr/bin/yum -y install epel-release git
+lxc-attach -n $CONTAINER -- /usr/bin/yum -y install epel-release
 lxc-attach -n $CONTAINER -- /usr/bin/yum -y install nagios nagios-plugins nagios-plugins-ping nagios-plugins-users nagios-plugins-load nagios-plugins-http nagios-plugins-disk nagios-plugins-ssh nagios-plugins-swap nagios-plugins-procs
 lxc-attach -n $CONTAINER -- /usr/bin/yum -y install pnp4nagios
 mkdir -p $C_PATH/var/www/html
@@ -137,6 +146,6 @@ lxc-attach -n $CONTAINER -- systemctl start npcd
 echo "PNP4Nagios has been configured and started."
 
 /usr/bin/cat include/nginx_nagios.conf.template | \
-         sed -e "s|\%SERVER\%|${HOST}|" \
+         sed -e "s|\%SERVER\%|${CONTAINER}|" \
              -e "s|\%SERVER_IP\%|${C_IP}|" \
-             -e "s|%FQDN%|${C_FQDN}|" > /etc/nginx/conf.d/${HOST}.conf
+             -e "s|%FQDN%|${C_FQDN}|" > /etc/nginx/conf.d/${CONTAINER}.conf

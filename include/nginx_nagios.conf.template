@@ -1,0 +1,35 @@
+server {
+    listen       80;
+    listen       [::]:80;
+    server_name  %FQDN%;
+    root         /usr/share/nginx/html;
+
+    location / {
+        return 301 http://$host:$server_port/nagios/;
+    }
+    location /nagios/ {
+        proxy_pass http://%SERVER%;
+    }
+    location /pnp4nagios/ {
+        proxy_pass http://%SERVER%;
+    }
+    location /nagios {
+        return 301 http://$host:$server_port/nagios/;
+    }
+    location /pnp4nagios {
+        return 301 http://$host:$server_port/pnp4nagios/;
+    }
+
+
+    error_page 404 /404.html;
+        location = /40x.html {
+    }
+
+    error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+    }
+}
+
+upstream %SERVER% {
+    server %SERVER_IP%;
+}

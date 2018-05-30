@@ -1,11 +1,19 @@
 #!/bin/sh
 
-CONTAINER=nagiost1
-C_IP=169.254.254.10
+die () {
+   echo >&2 "USAGE: . install.sh <container_name> <0-9> <fully qualified domain name>"
+   exit 1
+}
+
+[ "$#" -eq 3 ] || die $@
+echo $2 | grep -E -q '^[0-9]$' || die $@
+
+CONTAINER=$1
+C_IP=169.254.254.1$2
 C_NETMASK=255.255.255.0
 C_GATEWAY=169.254.254.1
 C_PATH=/var/lib/lxc/$CONTAINER/rootfs
-C_FQDN=nagios.smyt1.gslb.ncl.com
+C_FQDN=$3
 H_IP=169.254.254.1
 H_NETMASK=255.255.255.0
 
@@ -16,6 +24,17 @@ install_lxc() {
       echo "Installed LXC containers."
    else
       echo "LXC already installed."
+   fi
+}
+
+install_nginx() {
+   if ! rpm -ql nginx >/dev/null; then
+      yum -y install nginx
+      systemctl enable nginx
+      systemctl start nginx
+      echo "Finished installing NGINX."
+   else
+      echo "NGINX already installed."
    fi
 }
 
@@ -149,3 +168,5 @@ echo "PNP4Nagios has been configured and started."
          sed -e "s|\%SERVER\%|${CONTAINER}|" \
              -e "s|\%SERVER_IP\%|${C_IP}|" \
              -e "s|%FQDN%|${C_FQDN}|" > /etc/nginx/conf.d/${CONTAINER}.conf
+
+systemctl restart nginx

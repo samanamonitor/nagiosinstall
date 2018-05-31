@@ -109,6 +109,7 @@ setup_host_network() {
 
 install_samana_plugins () {
    ETCPATH=$1/etc/nagios/check_samana
+   OBJPATH=$1/etc/nagios/objects/samana
    PLUGINPATH=$1/usr/lib64/nagios/plugin
 
    if [ ! -d $ETCPATH ]; then
@@ -119,6 +120,11 @@ install_samana_plugins () {
       cat check_samana/src/check_samana.py | \
           sed -e "s|\%NAGIOSETC\%|${ETCPATH}|" \
               > $PLUGINPATH
+      mkdir -p $OBJPATH
+      cp include/perfdata.cfg $OBJPATH
+      cp include/commands.cfg $OBJPATH
+      cp include/Samana-Templates.cfg $OBJPATH
+      cp include/Samana-Windows.cfg $OBJPATH
       echo "Finished installing Samana plugins for Nagios."
    else
       echo "Samana plugins for Nagios already installed."
@@ -178,9 +184,7 @@ cp include/index.html $C_PATH/var/www/html/index.html
 mv $C_PATH/etc/nagios/nagios.cfg $C_PATH/etc/nagios/nagios.cfg.orig
 cp include/nagios.cfg $C_PATH/etc/nagios/nagios.cfg
 
-mkdir -p $C_PATH/etc/nagios/objects/samana
-cp include/perfdata.cfg $C_PATH/etc/nagios/objects/samana/perfdata.cfg
-cp include/commands.cfg $C_PATH/etc/nagios/objects/samana/commands.cfg
+install_samana_plugins $C_PATH
 
 lxc-attach -n $CONTAINER -- systemctl enable nagios
 lxc-attach -n $CONTAINER -- systemctl start nagios
@@ -200,4 +204,3 @@ echo "PNP4Nagios has been configured and started."
 systemctl restart nginx
 echo "NGINX has been modified and restarted."
 
-install_samana_plugins $C_PATH

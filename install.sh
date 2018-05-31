@@ -184,7 +184,21 @@ echo "Started Container"
 sleep 10
 echo "Starting to install packages..."
 lxc-attach -n $CONTAINER -- /usr/bin/yum -y install epel-release
-lxc-attach -n $CONTAINER -- /usr/bin/yum -y install nagios nagios-plugins nagios-plugins-ping nagios-plugins-users nagios-plugins-load nagios-plugins-http nagios-plugins-disk nagios-plugins-ssh nagios-plugins-swap nagios-plugins-procs pnp4nagios python2-winrm mod_wsgi pynag python-pillow
+lxc-attach -n $CONTAINER -- /usr/bin/yum -y install nagios \
+          nagios-plugins \
+          nagios-plugins-ping \
+          nagios-plugins-users \
+          nagios-plugins-load \
+          nagios-plugins-http \
+          nagios-plugins-disk \
+          nagios-plugins-ssh \
+          nagios-plugins-swap \
+          nagios-plugins-procs \
+          pnp4nagios \
+          python2-winrm \
+          mod_wsgi \
+          pynag \
+          python-pillow
 mkdir -p $C_PATH/var/www/html
 mkdir -p $C_PATH/var/log/httpd
 install_console $C_PATH

@@ -131,6 +131,23 @@ install_samana_plugins () {
    fi
 }
 
+install_console () {
+   WWWPATH=$1/var/www/html
+   CONSOLEPATH=$WWWPATH/samanamonitor
+   HTTPETC=$1/etc/httpd/conf.d
+
+   if [ ! -d $CONSOLEPATH ]; then
+      mkdir -p $CONSOLEPATH/wsgi
+      git clone https://github.com/samanamonitor/console.git
+      cp console/etc/wsgi.conf $HTTPETC
+      cp console/var/index.html $CONSOLEPATH
+      cp console/src/* $CONSOLEPATH/wsgi
+      echo "Finished installing console."
+   else
+      echo "Console already installed."
+   fi
+}
+
 install_lxc
 enable_ipforward
 setup_host_network virbr0 ens160 $H_IP $H_NETMASK
@@ -167,10 +184,10 @@ echo "Started Container"
 sleep 10
 echo "Starting to install packages..."
 lxc-attach -n $CONTAINER -- /usr/bin/yum -y install epel-release
-lxc-attach -n $CONTAINER -- /usr/bin/yum -y install nagios nagios-plugins nagios-plugins-ping nagios-plugins-users nagios-plugins-load nagios-plugins-http nagios-plugins-disk nagios-plugins-ssh nagios-plugins-swap nagios-plugins-procs
-lxc-attach -n $CONTAINER -- /usr/bin/yum -y install pnp4nagios python2-winrm
+lxc-attach -n $CONTAINER -- /usr/bin/yum -y install nagios nagios-plugins nagios-plugins-ping nagios-plugins-users nagios-plugins-load nagios-plugins-http nagios-plugins-disk nagios-plugins-ssh nagios-plugins-swap nagios-plugins-procs pnp4nagios python2-winrm mod_wsgi
 mkdir -p $C_PATH/var/www/html
 mkdir -p $C_PATH/var/log/httpd
+install_console $C_PATH
 echo "Packages installed."
 lxc-attach -n $CONTAINER -- systemctl enable httpd
 lxc-attach -n $CONTAINER -- systemctl start httpd

@@ -110,7 +110,7 @@ setup_host_network() {
 install_samana_plugins () {
    ETCPATH=$1/etc/nagios/check_samana
    OBJPATH=$1/etc/nagios/objects/samana
-   PLUGINPATH=$1/usr/lib64/nagios/plugin
+   PLUGINPATH=$1/usr/lib64/nagios/plugins
 
    if [ ! -d $ETCPATH ]; then
       git clone https://github.com/samanamonitor/check_samana.git

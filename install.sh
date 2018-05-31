@@ -38,6 +38,15 @@ install_nginx() {
    fi
 }
 
+install_git() {
+   if ! rpm -ql git >/dev/null; then
+      yum -y install git
+      echo "Finished installing GIT."
+   else
+      echo "GIT already installed."
+   fi
+}
+
 enable_ipforward() {
    if ! grep -e "^net.ipv4.ip_forward\s*=\s*1" /etc/sysctl.conf >/dev/null; then 
       echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
@@ -98,9 +107,28 @@ setup_host_network() {
    fi
 }
 
+install_samana_plugins () {
+   ETCPATH=$1/etc/nagios/check_samana
+   PLUGINPATH=$1/usr/lib64/nagios/plugin
+
+   if [ ! -d $ETCPATH ]; then
+      git clone github.com:samanamonitor/check_samana.git
+      mkdir -p $ETCPATH
+      cp check_samana/etc/config.json $ETCPATH
+      cp check_samana/src/check_ctx_farm.py $PLUGINPATH
+      cat check_samana/src/check_samana.py | \
+          sed -e "s|\%NAGIOSETC\%|${ETCPATH}|" \
+              > $PLUGINPATH
+      echo "Finished installing Samana plugins for Nagios."
+   else
+      echo "Samana plugins for Nagios already installed."
+   fi
+}
+
 install_lxc
 enable_ipforward
 setup_host_network virbr0 ens160 $H_IP $H_NETMASK
+install_git
 
 echo "Creating Container $CONTAINER ..."
 lxc-create -t centos -n $CONTAINER
@@ -134,7 +162,7 @@ sleep 10
 echo "Starting to install packages..."
 lxc-attach -n $CONTAINER -- /usr/bin/yum -y install epel-release
 lxc-attach -n $CONTAINER -- /usr/bin/yum -y install nagios nagios-plugins nagios-plugins-ping nagios-plugins-users nagios-plugins-load nagios-plugins-http nagios-plugins-disk nagios-plugins-ssh nagios-plugins-swap nagios-plugins-procs
-lxc-attach -n $CONTAINER -- /usr/bin/yum -y install pnp4nagios
+lxc-attach -n $CONTAINER -- /usr/bin/yum -y install pnp4nagios python2-winrm
 mkdir -p $C_PATH/var/www/html
 mkdir -p $C_PATH/var/log/httpd
 echo "Packages installed."
@@ -170,3 +198,6 @@ echo "PNP4Nagios has been configured and started."
              -e "s|%FQDN%|${C_FQDN}|" > /etc/nginx/conf.d/${CONTAINER}.conf
 
 systemctl restart nginx
+echo "NGINX has been modified and restarted."
+
+install_samana_plugins $C_PATH

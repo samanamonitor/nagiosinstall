@@ -16,6 +16,8 @@ C_PATH=/var/lib/lxc/$CONTAINER/rootfs
 C_FQDN=$3
 H_IP=169.254.254.1
 H_NETMASK=255.255.255.0
+N_USER=samananagios@NCLMIAMI.NCL.COM
+N_PASS=S4m4n4M0n!t0r
 
 install_lxc() {
    if ! rpm -ql lxc >/dev/null; then
@@ -111,6 +113,8 @@ install_samana_plugins () {
    ETCPATH=$1/etc/nagios/check_samana
    OBJPATH=$1/etc/nagios/objects/samana
    PLUGINPATH=$1/usr/lib64/nagios/plugins
+   USERNAME=$2
+   PASSWORD=$3
 
    if [ ! -d $ETCPATH ]; then
       git clone https://github.com/samanamonitor/check_samana.git
@@ -127,6 +131,11 @@ install_samana_plugins () {
       cp include/commands.cfg $OBJPATH
       cp include/Samana-Templates.cfg $OBJPATH
       cp include/Samana-Windows.cfg $OBJPATH
+      echo "\$USER11\$=/etc/nagios/private/samananagios.pw" >> $ETCPATH/../private/resource.cfg
+      cat include/pw.template | \
+         sed -e "s|\%USERNAME\%|$USERNAME|" \
+             -e "s|\%PASSWORD\%|$PASSWORD|" \
+           > $ETCPATH/../private/samananagios.pw
       echo "Finished installing Samana plugins for Nagios."
    else
       echo "Samana plugins for Nagios already installed."
@@ -217,7 +226,7 @@ cp include/index.html $C_PATH/var/www/html/index.html
 mv $C_PATH/etc/nagios/nagios.cfg $C_PATH/etc/nagios/nagios.cfg.orig
 cp include/nagios.cfg $C_PATH/etc/nagios/nagios.cfg
 
-install_samana_plugins $C_PATH
+install_samana_plugins $C_PATH $N_USER $N_PASS
 
 lxc-attach -n $CONTAINER -- systemctl enable nagios
 lxc-attach -n $CONTAINER -- systemctl start nagios

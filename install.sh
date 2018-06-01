@@ -117,9 +117,11 @@ install_samana_plugins () {
       mkdir -p $ETCPATH
       cp check_samana/etc/config.json $ETCPATH
       cp check_samana/src/check_ctx_farm.py $PLUGINPATH
+      chmod +x $PLUGINPATH/check_ctx_farm.py
       cat check_samana/src/check_samana.py | \
-          sed -e "s|\%NAGIOSETC\%|${ETCPATH}|" \
+          sed -e "s|\%NAGIOSETC\%|/etc/nagios|" \
               > $PLUGINPATH/check_samana.py
+      chmod +x $PLUGINPATH/check_samana.py
       mkdir -p $OBJPATH
       cp include/perfdata.cfg $OBJPATH
       cp include/commands.cfg $OBJPATH

@@ -18,6 +18,24 @@ H_IP=169.254.254.1
 H_NETMASK=255.255.255.0
 N_USER=samananagios@NCLMIAMI.NCL.COM
 N_PASS=S4m4n4M0n!t0r
+TIMEZONE="America/New_York"
+
+set_timezone() {
+   CPATH=$1
+   TZ=$2
+
+   mv $CPATH/etc/localtime $CPATH/etc/localtime.bak
+   ln -s $CPATH/usr/share/zoneinfo/$TZ $CPATH/etc/localtime
+}
+
+install_patch() {
+   if ! rpm -ql patch >/dev/null; then
+      yum -y install patch
+      echo "Installed patch."
+   else
+      echo "Patch already installed."
+   fi
+}
 
 install_lxc() {
    if ! rpm -ql lxc >/dev/null; then
@@ -159,6 +177,7 @@ install_console () {
    fi
 }
 
+install_patch
 install_lxc
 enable_ipforward
 setup_host_network virbr0 ens160 $H_IP $H_NETMASK
@@ -218,6 +237,8 @@ lxc-attach -n $CONTAINER -- systemctl enable httpd
 lxc-attach -n $CONTAINER -- systemctl start httpd
 echo "HTTPD daemon started"
 cp include/index.html $C_PATH/var/www/html/index.html
+patch $C_PATH/usr/share/nagios/html/pnp4nagios/templates.dist/default.php include/default_template.patch
+set_timezone $C_PATH $TIMEZONE
 
 ##
 #### Configure and Start Nagios #####

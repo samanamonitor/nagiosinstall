@@ -1,0 +1,18 @@
+diff -u a/pynag/Parsers/__init__.py b/pynag/Parsers/__init__.py
+--- a/pynag/Parsers/__init__.py 2019-05-09 16:28:35.140591241 +0000
++++ b/pynag/Parsers/__init__.py 2019-05-09 18:25:43.012928686 +0000
+@@ -373,9 +373,15 @@
+                     continue
+                 if k not in inherited_attributes:
+                     inherited_attributes[k] = v
++                else:
++                    if len(inherited_attributes[k]) > 1 and inherited_attributes[k][0] == "+":
++                        inherited_attributes[k] = v + "," + inherited_attributes[k][1:]
+                 if k not in original_item:
+                     original_item[k] = v
+                     template_fields.append(k)
++                else:
++                    if len(original_item[k]) > 1 and original_item[k][0] == "+":
++                        original_item[k] = v + "," + original_item[k][1:]
+         if 'name' in original_item:
+             my_cache[raw_definition] = original_item

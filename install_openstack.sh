@@ -238,7 +238,7 @@ User=nagios
 Group=nagios
 Type=simple
 ExecStart=${NAGIOS_BIN}/nagios /etc/nagios/nagios.cfg
-ExecReload=/bin/kill -HUP $MAINPID
+ExecReload=/bin/kill -HUP \$MAINPID
 EOF
 }
 

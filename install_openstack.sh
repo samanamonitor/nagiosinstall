@@ -89,9 +89,9 @@ install_wmi() {
     # winrm quickconfig -transport:https
     git clone https://github.com/samanamonitor/wmi.git
     cd wmi
-    ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" >> /tmp/install_log_wmi
+    ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" >> ${LOGPATH}/install_wmi.log
     cp ${HOME}/bin/wmic /usr/local/bin/
-    pip install --upgrade pywinrm
+    pip install --upgrade pywinrm >> ${LOGPATH}/install_wmi.log
 }
 
 
@@ -104,16 +104,18 @@ install_nagios() {
     usermod -a -G nagios,nagcmd www-data
     tar zxvf /tmp/nagios-4.2.0.tar.gz -C /tmp
     cd /tmp/nagios-4.2.0
-    ./configure --with-nagios-group=nagios --with-command-group=nagcmd --with-httpd-conf=/etc/apache2/sites-available
-    make all
-    make install
-    make install-init
-    make install-config
-    make install-commandmode
+    ./configure --with-nagios-group=nagios \
+        --with-command-group=nagcmd \
+        --with-httpd-conf=/etc/apache2/sites-available >> ${LOGPATH}/install_nagios.log
+    make all  >> ${LOGPATH}/install_nagios.log
+    make install  >> ${LOGPATH}/install_nagios.log
+    make install-init >> ${LOGPATH}/install_nagios.log
+    make install-config >> ${LOGPATH}/install_nagios.log
+    make install-commandmode >> ${LOGPATH}/install_nagios.log
     /usr/bin/install -c -m 644 sample-config/httpd.conf /etc/apache2/sites-available/nagios.conf
     ln -s /etc/apache2/sites-available/nagios.conf /etc/apache2/sites-enabled/
     cp -R contrib/eventhandlers/ /usr/local/nagios/libexec/
-    /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+    /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg >> ${LOGPATH}/install_nagios.log
     a2enmod rewrite
     a2enmod cgi
     ln -s /etc/init.d/nagios /etc/rcS.d/S99nagios

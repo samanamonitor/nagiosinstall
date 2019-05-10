@@ -157,8 +157,8 @@ install_check_bw() {
 }
 
 install_check_samana() {
-    git clone https://github.com/samanamonitor/check_samana.git
-    cp check_samana/src/*.py ${NAGIOS_LIBEXEC}
+    git clone https://github.com/samanamonitor/check_samana.git /tmp/check_samana
+    cp /tmp/check_samana/src/*.py ${NAGIOS_LIBEXEC}
     chown nagios.nagios ${NAGIOS_LIBEXEC}/*.py
     chmod +x ${NAGIOS_LIBEXEC}/*.py
     mkdir ${NAGIOS_ETC}/check_samana
@@ -182,8 +182,8 @@ install_mibs() {
 }
 
 install_pynag() {
-    git clone https://github.com/samanamonitor/pynag.git
-    cd pynag
+    git clone https://github.com/samanamonitor/pynag.git /tmp/pynag
+    cd /tmp/pynag
     python setup.py build
     python setup.py install
 }
@@ -214,10 +214,10 @@ install_slack_nagios() {
 }
 
 install_check_wmi_plus() {
-    git clone https://github.com/samanamonitor/check_wmi_plus.git
-    cp $DIR/check_wmi_plus/check_wmi_plus_help.pl \
-        $DIR/check_wmi_plus/check_wmi_plus.pl \
-        $DIR/check_wmi_plus/check_wmi_plus.README.txt \
+    git clone https://github.com/samanamonitor/check_wmi_plus.git /tmp/check_wmi_plus
+    cp /tmp/check_wmi_plus/check_wmi_plus_help.pl \
+        /tmp/check_wmi_plus/check_wmi_plus.pl \
+        /tmp/check_wmi_plus/check_wmi_plus.README.txt \
         ${NAGIOS_LIBEXEC}
 
     #sed -i "s|my \$conf_file=.*|my \$conf_file='/etc/nagios/check_wmi_plus/check_wmi_plus.conf';|" \

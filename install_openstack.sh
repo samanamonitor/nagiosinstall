@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -x
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 NAGIOS=/usr/loca/nagios
@@ -54,26 +53,17 @@ install_prereqs() {
         bc \
         git \
         php-sybase \
-
-set -x        curl \
-
-set -x        apt-transport-https \
-
-set -x        libwww-perl \
-
-set -x        libcrypt-ssleay-perl \
-
-set -x        liblwp-protocol-https-perl \
-    
-    set -x    autoconf \
+        curl \
+        apt-transport-https \
+        libwww-perl \
+        libcrypt-ssleay-perl \
+        liblwp-protocol-https-perl \
+        autoconf \
         make \
         libdatetime-perl \
-    
-    set -x    build-essential \
-    
-    set -x    g++ \
-    
-    set -x    python-dev"
+        build-essential \
+        g++ \
+        python-dev"
 
     mkdir /tmp/install_log
     apt-get update
@@ -91,88 +81,53 @@ set -x        liblwp-protocol-https-perl \
 
 }
 
-
-set -x###  Install wmi
-
-set -xinstall_wmi() {
-
-set -x    # run the following commands on windows for winRM to be enabled
-
-set -x    # winrm quickconfig -transport:https
-
-set -x    git clone https://github.com/samanamonitor/wmi.git
-
-set -x    cd wmi
-
-set -x    ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" >> /tmp/install_log_wmi
+###  Install wmi
+install_wmi() {
+    # run the following commands on windows for winRM to be enabled
+    # winrm quickconfig -transport:https
+    git clone https://github.com/samanamonitor/wmi.git
+    cd wmi
+    ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" >> /tmp/install_log_wmi
     cp ${HOME}/bin/wmic /usr/local/bin/
+    pip install --upgrade pywinrm
+}
 
-set -x    pip install --upgrade pywinrm
 
-set -x}
-
-set -x
-
-set -x
-
-set -x##############donwload and install Nagios################
-
-set -xinstall_nagios() {
-
-set -x    wget -P /tmp http://prdownloads.sourceforge.net/sourceforge/nagios/nagios-4.2.0.tar.gz 
-
-set -x    useradd nagios
-
-set -x    groupadd nagcmd
-
-set -x    usermod -a -G nagcmd nagios
-
-set -x    usermod -a -G nagios,nagcmd www-data
-
-set -x    tar zxvf /tmp/nagios-4.2.0.tar.gz -C /tmp
-
-set -x    tar zxvf /tmp/nagios-plugins-2.1.2.tar.gz -C /tmp
-
-set -x    cd /tmp/nagios-4.2.0
+##############donwload and install Nagios################
+install_nagios() {
+    wget -P /tmp http://prdownloads.sourceforge.net/sourceforge/nagios/nagios-4.2.0.tar.gz 
+    useradd nagios
+    groupadd nagcmd
+    usermod -a -G nagcmd nagios
+    usermod -a -G nagios,nagcmd www-data
+    tar zxvf /tmp/nagios-4.2.0.tar.gz -C /tmp
+    tar zxvf /tmp/nagios-plugins-2.1.2.tar.gz -C /tmp
+    cd /tmp/nagios-4.2.0
     ./configure --with-nagios-group=nagios --with-command-group=nagcmd
     make all
     make install
     make install-init
     make install-config
-
-set -x    make install-commandmode
+    make install-commandmode
     /usr/bin/install -c -m 644 sample-config/httpd.conf /etc/apache2/sites-available/nagios.conf
-
-set -x    ln -s /etc/apache2/sites-available/nagios.conf /etc/apache2/sites-enabled/
-
-set -x    cp -R contrib/eventhandlers/ /usr/local/nagios/libexec/
-
-set -x    /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+    ln -s /etc/apache2/sites-available/nagios.conf /etc/apache2/sites-enabled/
+    cp -R contrib/eventhandlers/ /usr/local/nagios/libexec/
+    /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
     a2enmod rewrite
     a2enmod cgi
     ln -s /etc/init.d/nagios /etc/rcS.d/S99nagios
     htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin Samana81.
+    ln -s /usr/local/nagios/etc /etc/nagios
+}
 
-set -x    ln -s /usr/local/nagios/etc /etc/nagios
-
-set -x}
-
-
-set -x##############Configure nagios pluginss################
-
-set -xinstall_nagios_plugins() {
-
-set -x    wget -P /tmp http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
-
-set -x    cd /tmp/nagios-plugins-2.1.2
-
-set -x    ./configure --with-nagios-user=nagios --with-nagios-group=nagios
-
-set -x    make
-
-set -x    make install
-
-set -x}
+##############Configure nagios pluginss################
+install_nagios_plugins() {
+    wget -P /tmp http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
+    cd /tmp/nagios-plugins-2.1.2
+    ./configure --with-nagios-user=nagios --with-nagios-group=nagios
+    make
+    make install
+}
 
 ##############Configure pnp4nagios#####################
 install_pnp4nagios() {
@@ -202,7 +157,6 @@ install_check_samana() {
     mkdir ${NAGIOS_ETC}/check_samana
     cp check_samana/etc/config.json ${NAGIOS_ETC}
 }
-set -x
 
 install_mibs() {
     # copy all the following MIBs to /usr/share/snmp/mibs
@@ -216,26 +170,18 @@ install_mibs() {
     #   SNMP-TARGET-MIB.txt
     #   SNMP-VIEW-BASED-ACM-MIB.txt
 
-    
-    set -x#wget http://192.168.0.12/support/docs/snmp/HP-Openview/NS-MIB-smiv2.mib -O /usr/share/snmp/mibs/NS-MIB-smiv2.txt
-    
-    set -xecho "mibs ALL" >> /etc/snmp/snmp.conf
+    #wget http://192.168.0.12/support/docs/snmp/HP-Openview/NS-MIB-smiv2.mib -O /usr/share/snmp/mibs/NS-MIB-smiv2.txt
+    echo "mibs ALL" >> /etc/snmp/snmp.conf
 }
-set -x
 
-set -x
-inst
-set -xall_pynag() {
-    
-    set -xgit clone https://github.com/samanamonitor/pynag.git
+install_pynag() {
+    git clone https://github.com/samanamonitor/pynag.git
     cd pynag
     python setup.py build
     python setup.py install
 }
 
-set -x
-inst
-set -xall_check_mssql() {
+install_check_mssql() {
     cp $DIR/support/check_mssql ${NAGIOS_LIBEXEC}
     chown nagios.nagios ${NAGIOS_LIBEXEC}/check_mssql
     #ACCEPT_EULA=Y apt-get -y install msodbcsql17 mssql-tools

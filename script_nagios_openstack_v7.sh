@@ -67,12 +67,12 @@ install_prereqs() {
 
     mkdir /tmp/install_log
     apt-get update
-    sudo apt-get install -y $INSTALL_PKGS >> /tmp/install_log/apt-get.log
-    sudo cpanm Number::Format
-    sudo cpanm Config::IniFiles
-    sudo cpam Date::Time
-    sudo cpanm DateTime
-    (echo y; echo y; echo y) | sudo sendmailconfig
+    apt-get install -y $INSTALL_PKGS >> /tmp/install_log/apt-get.log
+    cpanm Number::Format
+    cpanm Config::IniFiles
+    cpam Date::Time
+    cpanm DateTime
+    (echo y; echo y; echo y) | sendmailconfig
 
 
     #curl -s https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -

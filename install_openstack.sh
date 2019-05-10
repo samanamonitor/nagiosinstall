@@ -3,7 +3,7 @@
 set -x
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-NAGIOS=/usr/loca/nagios
+NAGIOS=/usr/local/nagios
 NAGIOS_ETC=${NAGIOS}/etc
 NAGIOS_BIN=${NAGIOS}/bin
 NAGIOS_LIBEXEC=${NAGIOS}/libexec
@@ -138,8 +138,11 @@ install_pnp4nagios() {
     ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd
     make all
     make fullinstall
+
+    # TODO: change configure to install apache files in the correct location
     mv /etc/httpd/conf.d/pnp4nagios.conf /etc/apache2/sites-available/
     rm -Rf /etc/httpd
+
     ln -s /etc/apache2/sites-available/pnp4nagios.conf /etc/apache2/sites-enabled/
     mv /usr/local/pnp4nagios/share/install.php /usr/local/pnp4nagios/share/install-old.php
     ln -s /etc/init.d/npcd /etc/rcS.d/S98npcd
@@ -197,7 +200,7 @@ install_check_mssql() {
     #EOF
     #ln -s /etc/php/7.0/mods-available/pdo_sqlsrv.ini /etc/php/7.0/apache2/conf.d/20-pdo_sqlsrv.ini
     #ln -s /etc/php/7.0/mods-available/pdo_sqlsrv.ini /etc/php/7.0/cli/conf.d/20-pdo_sqlsrv.ini
-    sed -i '/;^\s\+tds\s\+version/a    tds version = 8.0' \
+    sed -i '/^;\s\+tds\s\+version/a    tds version = 8.0' \
         /etc/freetds/freetds.conf
 }
 
@@ -215,7 +218,7 @@ install_check_wmi_plus() {
         ${NAGIOS_LIBEXEC}
 
     sed -i "s|my \$conf_file=.*|my \$conf_file='/etc/nagios/check_wmi_plus/check_wmi_plus.conf';|" \
-        /usr/local/nagios/libexec/check_wmi_plus.pl
+        ${NAGIOS_LIBEXEC}/check_wmi_plus.pl
 
 }
 

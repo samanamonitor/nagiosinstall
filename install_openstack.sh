@@ -7,6 +7,7 @@ NAGIOS=/usr/local/nagios
 NAGIOS_ETC=${NAGIOS}/etc
 NAGIOS_BIN=${NAGIOS}/bin
 NAGIOS_LIBEXEC=${NAGIOS}/libexec
+LOGPATH=/tmp/install_log
 
 
 ###############Resize partitions##########################
@@ -17,7 +18,7 @@ resize_partition() {
     (echo d; echo 5; echo d; echo 2; echo d; echo n; echo p; echo 1; echo 2048; echo +7.5G; echo n; echo p; echo 2; echo 15706112; echo 16750591; echo a; echo 1; echo t; echo 2; echo 82; echo w) | fdisk /dev/xvda
     partprobe
     resize2fs /dev/xvda1
-    mkswap /dev/xvda2 >> /install_log/swaplog.log
+    mkswap /dev/xvda2 >> ${LOGPATH}/swaplog.log
     swapon /dev/xvda2 
     sed -i '1d' /install_log/swaplog.log
     sed -i 's/^no label, //' /install_log/swaplog.log
@@ -66,13 +67,13 @@ install_prereqs() {
         g++ \
         python-dev"
 
-    mkdir /tmp/install_log
-    apt-get update
-    apt-get install -y $INSTALL_PKGS >> /tmp/install_log/apt-get.log
-    cpanm Number::Format
-    cpanm Config::IniFiles
-    cpam Date::Time
-    cpanm DateTime
+    mkdir -p ${LOGPATH}
+    apt-get update >> ${LOGPATH}/prerequisites.log
+    apt-get install -y $INSTALL_PKGS >> ${LOGPATH}/prerequisites.log
+    cpanm Number::Format >> ${LOGPATH}/prerequisites.log
+    cpanm Config::IniFiles >> ${LOGPATH}/prerequisites.log
+    cpam Date::Time >> ${LOGPATH}/prerequisites.log
+    cpanm DateTime >> ${LOGPATH}/prerequisites.log
     (echo y; echo y; echo y) | sendmailconfig
 
 
@@ -102,7 +103,6 @@ install_nagios() {
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
     tar zxvf /tmp/nagios-4.2.0.tar.gz -C /tmp
-    tar zxvf /tmp/nagios-plugins-2.1.2.tar.gz -C /tmp
     cd /tmp/nagios-4.2.0
     ./configure --with-nagios-group=nagios --with-command-group=nagcmd
     make all
@@ -124,6 +124,7 @@ install_nagios() {
 ##############Configure nagios pluginss################
 install_nagios_plugins() {
     wget -P /tmp http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
+    tar zxvf /tmp/nagios-plugins-2.1.2.tar.gz -C /tmp
     cd /tmp/nagios-plugins-2.1.2
     ./configure --with-nagios-user=nagios --with-nagios-group=nagios
     make

@@ -6,3 +6,5 @@ Instructions:
 
 * sudo apt install -y git
 * git clone https://github.com/samanamonitor/nagiosinstall.git
+* cd nagiosinstall
+* ./install_openstack.sh

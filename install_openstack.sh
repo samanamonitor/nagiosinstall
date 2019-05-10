@@ -104,7 +104,7 @@ install_nagios() {
     usermod -a -G nagios,nagcmd www-data
     tar zxvf /tmp/nagios-4.2.0.tar.gz -C /tmp
     cd /tmp/nagios-4.2.0
-    ./configure --with-nagios-group=nagios --with-command-group=nagcmd
+    ./configure --with-nagios-group=nagios --with-command-group=nagcmd --with-httpd-conf=/etc/apache2/sites-available
     make all
     make install
     make install-init
@@ -136,13 +136,13 @@ install_pnp4nagios() {
     wget "https://sourceforge.net/projects/pnp4nagios/files/latest" -O /tmp/pnp4nagios.latest.tar.gz
     tar zxvf /tmp/pnp4nagios.latest.tar.gz -C /tmp
     cd /tmp/pnp4nagios-0.6.26
-    ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd
+    ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd  --with-httpd-conf=/etc/apache2/sites-available
     make all
     make fullinstall
 
     # TODO: change configure to install apache files in the correct location
-    mv /etc/httpd/conf.d/pnp4nagios.conf /etc/apache2/sites-available/
-    rm -Rf /etc/httpd
+    #mv /etc/httpd/conf.d/pnp4nagios.conf /etc/apache2/sites-available/
+    #rm -Rf /etc/httpd
 
     ln -s /etc/apache2/sites-available/pnp4nagios.conf /etc/apache2/sites-enabled/
     mv /usr/local/pnp4nagios/share/install.php /usr/local/pnp4nagios/share/install-old.php
@@ -257,3 +257,7 @@ install_pynag
 install_check_mssql
 install_slack_nagios
 install_check_wmi_plus
+
+systemctl daemon-reload
+systemctl start nagios
+systemctl reload apache2

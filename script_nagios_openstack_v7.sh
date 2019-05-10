@@ -95,53 +95,53 @@ install_wmi() {
 
 ##############donwload and install Nagios################
 install_nagios() {
-    sudo wget -P /tmp http://prdownloads.sourceforge.net/sourceforge/nagios/nagios-4.2.0.tar.gz 
-    sudo useradd nagios
-    sudo groupadd nagcmd
-    sudo usermod -a -G nagcmd nagios
-    sudo usermod -a -G nagios,nagcmd www-data
-    sudo tar zxvf /tmp/nagios-4.2.0.tar.gz -C /tmp
-    sudo tar zxvf /tmp/nagios-plugins-2.1.2.tar.gz -C /tmp
+    wget -P /tmp http://prdownloads.sourceforge.net/sourceforge/nagios/nagios-4.2.0.tar.gz 
+    useradd nagios
+    groupadd nagcmd
+    usermod -a -G nagcmd nagios
+    usermod -a -G nagios,nagcmd www-data
+    tar zxvf /tmp/nagios-4.2.0.tar.gz -C /tmp
+    tar zxvf /tmp/nagios-plugins-2.1.2.tar.gz -C /tmp
     cd /tmp/nagios-4.2.0
-    sudo ./configure --with-nagios-group=nagios --with-command-group=nagcmd
-    sudo make all
-    sudo make install
-    sudo make install-init
-    sudo make install-config
-    sudo make install-commandmode
-    sudo /usr/bin/install -c -m 644 sample-config/httpd.conf /etc/apache2/sites-available/nagios.conf
-    sudo ln -s /etc/apache2/sites-available/nagios.conf /etc/apache2/sites-enabled/
-    sudo cp -R contrib/eventhandlers/ /usr/local/nagios/libexec/
-    sudo /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
-    sudo a2enmod rewrite
-    sudo a2enmod cgi
-    sudo ln -s /etc/init.d/nagios /etc/rcS.d/S99nagios
-    sudo htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin Samana81.
+    ./configure --with-nagios-group=nagios --with-command-group=nagcmd
+    make all
+    make install
+    make install-init
+    make install-config
+    make install-commandmode
+    /usr/bin/install -c -m 644 sample-config/httpd.conf /etc/apache2/sites-available/nagios.conf
+    ln -s /etc/apache2/sites-available/nagios.conf /etc/apache2/sites-enabled/
+    cp -R contrib/eventhandlers/ /usr/local/nagios/libexec/
+    /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+    a2enmod rewrite
+    a2enmod cgi
+    ln -s /etc/init.d/nagios /etc/rcS.d/S99nagios
+    htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin Samana81.
     ln -s /usr/local/nagios/etc /etc/nagios
 }
 
 ##############Configure nagios pluginss################
 install_nagios_plugins() {
-    sudo wget -P /tmp http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
+    wget -P /tmp http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
     cd /tmp/nagios-plugins-2.1.2
-    sudo ./configure --with-nagios-user=nagios --with-nagios-group=nagios
-    sudo make
-    sudo make install
+    ./configure --with-nagios-user=nagios --with-nagios-group=nagios
+    \make
+    \make install
 }
 
 ##############Configure pnp4nagios#####################
 install_pnp4nagios() {
-    sudo wget "https://sourceforge.net/projects/pnp4nagios/files/latest" -O /tmp/pnp4nagios.latest.tar.gz
-    sudo tar zxvf /tmp/pnp4nagios.latest.tar.gz -C /tmp
+    wget "https://sourceforge.net/projects/pnp4nagios/files/latest" -O /tmp/pnp4nagios.latest.tar.gz
+    tar zxvf /tmp/pnp4nagios.latest.tar.gz -C /tmp
     cd /tmp/pnp4nagios-0.6.26
-    sudo ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd
-    sudo make all
-    sudo make fullinstall
-    sudo mv /etc/httpd/conf.d/pnp4nagios.conf /etc/apache2/sites-available/
-    sudo rm -Rf /etc/httpd
-    sudo ln -s /etc/apache2/sites-available/pnp4nagios.conf /etc/apache2/sites-enabled/
-    sudo mv /usr/local/pnp4nagios/share/install.php /usr/local/pnp4nagios/share/install-old.php
-    sudo ln -s /etc/init.d/npcd /etc/rcS.d/S98npcd
+    ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd
+    make all
+    make fullinstall
+    mv /etc/httpd/conf.d/pnp4nagios.conf /etc/apache2/sites-available/
+    rm -Rf /etc/httpd
+    ln -s /etc/apache2/sites-available/pnp4nagios.conf /etc/apache2/sites-enabled/
+    mv /usr/local/pnp4nagios/share/install.php /usr/local/pnp4nagios/share/install-old.php
+    ln -s /etc/init.d/npcd /etc/rcS.d/S98npcd
 }
 
 install_check_bw() {

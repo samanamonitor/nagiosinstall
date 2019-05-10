@@ -201,7 +201,7 @@ install_check_mssql() {
     #EOF
     #ln -s /etc/php/7.0/mods-available/pdo_sqlsrv.ini /etc/php/7.0/apache2/conf.d/20-pdo_sqlsrv.ini
     #ln -s /etc/php/7.0/mods-available/pdo_sqlsrv.ini /etc/php/7.0/cli/conf.d/20-pdo_sqlsrv.ini
-    sed -i '/^;\s\+tds\s\+version/a    tds version = 8.0' \
+    sed -i '/^;\s\+tds\s\+version/a tds version = 8.0' \
         /etc/freetds/freetds.conf
 }
 
@@ -218,8 +218,8 @@ install_check_wmi_plus() {
         $DIR/check_wmi_plus/check_wmi_plus.README.txt \
         ${NAGIOS_LIBEXEC}
 
-    sed -i "s|my \$conf_file=.*|my \$conf_file='/etc/nagios/check_wmi_plus/check_wmi_plus.conf';|" \
-        ${NAGIOS_LIBEXEC}/check_wmi_plus.pl
+    #sed -i "s|my \$conf_file=.*|my \$conf_file='/etc/nagios/check_wmi_plus/check_wmi_plus.conf';|" \
+    #    ${NAGIOS_LIBEXEC}/check_wmi_plus.pl
 
 }
 

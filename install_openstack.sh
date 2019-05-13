@@ -166,18 +166,7 @@ install_check_samana() {
 }
 
 install_mibs() {
-    # copy all the following MIBs to /usr/share/snmp/mibs
-    #   NS-MIB-smiv2.txt 
-    #   SDX-MIB-smiv2.txt 
-    #   INET-ADDRESS-MIB.txt 
-    #   IPV6-TC.txt 
-    #   SNMPv2-SMI.txt 
-    #   SNMPv2-TC.txt 
-    #   SNMP-FRAMEWORK-MIB.txt
-    #   SNMP-TARGET-MIB.txt
-    #   SNMP-VIEW-BASED-ACM-MIB.txt
-
-    #wget http://192.168.0.12/support/docs/snmp/HP-Openview/NS-MIB-smiv2.mib -O /usr/share/snmp/mibs/NS-MIB-smiv2.txt
+    cp $DIR/support/mibs/* /usr/share/snmp/mibs
     echo "mibs ALL" >> /etc/snmp/snmp.conf
 }
 
@@ -244,6 +233,10 @@ ExecReload=/bin/kill -HUP \$MAINPID
 EOF
 }
 
+install_nagios_base_config() {
+    # TODO
+}
+
 
 #resize_partition
 install_prereqs
@@ -259,6 +252,7 @@ install_pynag
 install_check_mssql
 install_slack_nagios
 install_check_wmi_plus
+install_nagios_base_config
 
 systemctl daemon-reload
 systemctl start nagios

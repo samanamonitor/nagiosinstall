@@ -235,6 +235,7 @@ EOF
 
 install_nagios_base_config() {
     # TODO
+    return
 }
 
 

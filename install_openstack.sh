@@ -72,7 +72,7 @@ install_prereqs() {
     apt-get install -y $INSTALL_PKGS >> ${LOGPATH}/prerequisites.log
     cpanm Number::Format >> ${LOGPATH}/prerequisites.log
     cpanm Config::IniFiles >> ${LOGPATH}/prerequisites.log
-    cpam Date::Time >> ${LOGPATH}/prerequisites.log
+    cpanm Date::Time >> ${LOGPATH}/prerequisites.log
     cpanm DateTime >> ${LOGPATH}/prerequisites.log
     (echo y; echo y; echo y) | sendmailconfig
 

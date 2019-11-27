@@ -1,3 +1,4 @@
+# Need to remove this!!! It breaks compareObjects in the parser
 diff -u a/pynag/Parsers/__init__.py b/pynag/Parsers/__init__.py
 --- a/pynag/Parsers/__init__.py 2019-05-09 16:28:35.140591241 +0000
 +++ b/pynag/Parsers/__init__.py 2019-05-09 18:25:43.012928686 +0000

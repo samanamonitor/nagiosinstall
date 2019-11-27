@@ -75,6 +75,7 @@ install_prereqs() {
     cpanm Date::Time >> ${LOGPATH}/prerequisites.log
     cpanm DateTime >> ${LOGPATH}/prerequisites.log
     (echo y; echo y; echo y) | sendmailconfig
+    python -m easy_install --upgrade pyOpenSSL
 
 
     #curl -s https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
@@ -234,8 +235,31 @@ EOF
 }
 
 install_nagios_base_config() {
-    # TODO
-    return
+    mkdir -p /etc/nagios/objects/samana
+    mkdir -p /etc/nagios/objects/environment
+    cp -R etc/objects/samana/* /etc/nagios/objects/samana/
+    cp -R etc/objects/environment/* /etc/nagios/objects/environment
+    echo "cfg_dir=/etc/nagios/objects/samana" >> /etc/nagios/nagios.cfg
+    echo "cfg_dir=/etc/nagios/objects/environment" >> /etc/nagios/nagios.cfg
+}
+
+install_nagios_config() {
+    local TEMPDIR=$(mktemp -d)
+    local CURDIR=$(pwd)
+    git clone https://github.com/samanamonitor/nagios-config.git ${TEMPDIR}
+    cd ${TEMPDIR}
+    apt install -y libapache2-mod-wsgi
+    pip install flask
+    mkdir -p /var/www/nagios_config/nagios_config
+    mkdir -p /var/www/nagios_config/html
+    cp -R nagios_config/* /var/www/nagios_config/nagios_config/
+    cp -R html/* /var/www/nagios_config/html/
+    cp nagios_config.wsgi /var/www/nagios_config/
+    chown -R www-data.www-data /var/www/nagios_config
+    cp etc/apache2/sites-available/nagios-config.conf /etc/apache2/sites-available/
+    cd /etc/apache2/sites-enabled/
+    ln -s ../sites-available/nagios-config.conf
+    cd ${CURDIR}
 }
 
 
@@ -254,6 +278,7 @@ install_check_mssql
 install_slack_nagios
 install_check_wmi_plus
 install_nagios_base_config
+install_nagios_config
 
 systemctl daemon-reload
 systemctl start nagios

@@ -293,8 +293,8 @@ install_nagios_config() {
     rm -Rf ${TEMPDIR}
 }
 
-UID=$(id -u)
-if [ "${UID}" != "0" ]; then
+USERID=$(id -u)
+if [ "${USERID}" != "0" ]; then
     echo "Please run using sudo or as root"
     exit 1
 fi

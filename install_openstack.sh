@@ -244,11 +244,15 @@ install_check_wmi_plus() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     git clone https://github.com/samanamonitor/check_wmi_plus.git ${TEMPDIR}
-    cp ${TEMPDIR}/check_wmi_plus/check_wmi_plus_help.pl \
-        ${TEMPDIR}/check_wmi_plus/check_wmi_plus.pl \
-        ${TEMPDIR}/check_wmi_plus/check_wmi_plus.README.txt \
+    cp ${TEMPDIR}/check_wmi_plus_help.pl \
+        ${TEMPDIR}/check_wmi_plus.pl \
+        ${TEMPDIR}/check_wmi_plus.README.txt \
         ${NAGIOS_LIBEXEC}
-
+    chown nagios.nagios ${NAGIOS_LIBEXEC}/check_wmi_plus_help.pl \
+        ${NAGIOS_LIBEXEC}/check_wmi_plus.pl \
+        ${NAGIOS_LIBEXEC}/check_wmi_plus.README.txt
+    cp -R ${TEMPDIR}/etc/check_wmi_plus ${NAGIOS_ETC}
+    chown -R nagios.nagios ${NAGIOS_ETC}/check_wmi_plus
     #sed -i "s|my \$conf_file=.*|my \$conf_file='/etc/nagios/check_wmi_plus/check_wmi_plus.conf';|" \
     #    ${NAGIOS_LIBEXEC}/check_wmi_plus.pl
     cd ${CURDIR}

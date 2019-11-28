@@ -1,0 +1,39 @@
+diff -u a/pynag/Model/__init__.py  b/pynag/Model/__init__.py 
+--- a/pynag/Model/__init__.py   2019-11-01 23:15:41.937021947 +0000
++++ b/pynag/Model/__init__.py   2019-11-01 23:18:01.772965511 +0000
+@@ -1530,7 +1530,8 @@
+     def get_effective_services(self):
+         """ Returns a list of all Service that belong to this Host """
+         get_object = lambda x: Service.objects.get_by_id(x, cache_only=True)
+-        list_of_shortnames = sorted(ObjectRelations.host_services[self.host_name])
++        host_name = self.host_name if self.host_name is not None else self.name
++        list_of_shortnames = sorted(ObjectRelations.host_services[host_name])
+         services = map(get_object, list_of_shortnames)
+         # Look for services that define hostgroup_name that we belong to
+         for hg in self.get_effective_hostgroups():
+@@ -1540,19 +1541,22 @@
+     def get_effective_contacts(self):
+         """ Returns a list of all Contact that belong to this Host """
+         get_object = lambda x: Contact.objects.get_by_shortname(x, cache_only=True)
+-        list_of_shortnames = sorted(ObjectRelations.host_contacts[self.host_name])
++        host_name = self.host_name if self.host_name is not None else self.name
++        list_of_shortnames = sorted(ObjectRelations.host_contacts[host_name])
+         return map(get_object, list_of_shortnames)
+ 
+     def get_effective_contact_groups(self):
+         """ Returns a list of all Contactgroup that belong to this Host """
+         get_object = lambda x: Contactgroup.objects.get_by_shortname(x, cache_only=True)
+-        list_of_shortnames = sorted(ObjectRelations.host_contact_groups[self.host_name])
++        host_name = self.host_name if self.host_name is not None else self.name
++        list_of_shortnames = sorted(ObjectRelations.host_contact_groups[host_name])
+         return map(get_object, list_of_shortnames)
+ 
+     def get_effective_hostgroups(self):
+         """ Returns a list of all Hostgroup that belong to this Host """
+         get_object = lambda x: Hostgroup.objects.get_by_shortname(x, cache_only=True)
+-        list_of_shortnames = sorted(ObjectRelations.host_hostgroups[self.host_name])
++        host_name = self.host_name if self.host_name is not None else self.name
++        list_of_shortnames = sorted(ObjectRelations.host_hostgroups[host_name])
+         return map(get_object, list_of_shortnames)
+ 
+     def get_effective_network_parents(self, recursive=False):

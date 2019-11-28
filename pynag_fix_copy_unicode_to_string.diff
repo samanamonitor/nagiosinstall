@@ -1,0 +1,73 @@
+--- a/pynag/Model/__init__.py   2019-11-18 13:36:11.087898009 +0000
++++ b/pynag/Model/__init__.py   2019-11-18 13:37:12.299885543 +0000
+@@ -1010,7 +1010,7 @@
+ 
+         Returns None if no attribute can be found to use as a shortname
+         """
+-        return self.get("%s_name" % self.object_type, None)
++        return self.get("%s_name" % self.object_type, self.name)
+ 
+     def get_filename(self):
+         """ Get name of the config file which defines this object
+@@ -1150,6 +1150,9 @@
+ 
+             :returns: string of this objects notifications
+         """
++        if 'get_effective_contacts' not in dir(self):
++            return None
++
+         if contact_name is None:
+             contacts = self.get_effective_contacts()
+             if len(contacts) == 0:
+@@ -1541,7 +1544,10 @@
+         """ Returns a list of all Contact that belong to this Host """
+         get_object = lambda x: Contact.objects.get_by_shortname(x, cache_only=True)
+         list_of_shortnames = sorted(ObjectRelations.host_contacts[self.host_name])
+-        return map(get_object, list_of_shortnames)
++        contacts = map(get_object, list_of_shortnames)
++        for cg in self.get_effective_contact_groups():
++            contacts += cg.get_effective_contacts()
++        return contacts
+ 
+     def get_effective_contact_groups(self):
+         """ Returns a list of all Contactgroup that belong to this Host """
+@@ -1552,8 +1558,12 @@
+     def get_effective_hostgroups(self):
+         """ Returns a list of all Hostgroup that belong to this Host """
+         get_object = lambda x: Hostgroup.objects.get_by_shortname(x, cache_only=True)
+-        list_of_shortnames = sorted(ObjectRelations.host_hostgroups[self.host_name])
+-        return map(get_object, list_of_shortnames)
++        n = self.get("host_name", self.name)
++        list_of_shortnames = sorted(ObjectRelations.host_hostgroups[n])
++        hostgroups = map(get_object, list_of_shortnames)
++        for h in self.get_effective_parents():
++            hostgroups += h.get_effective_hostgroups()
++        return list(set(hostgroups))
+ 
+     def get_effective_network_parents(self, recursive=False):
+         """ Get all objects this one depends on via "parents" attribute
+@@ -1675,8 +1685,10 @@
+         # Do hostgroups
+         hg = AttributeList(self.hostgroups)
+         for i in hg.fields:
+-            ObjectRelations.host_hostgroups[self.host_name].add(i)
+-            ObjectRelations.hostgroup_hosts[i].add(self.host_name)
++            n = self.get("host_name", self.name)
++            if n is None: continue
++            ObjectRelations.host_hostgroups[n].add(i)
++            ObjectRelations.hostgroup_hosts[i].add(n)
+             # Contactgroups
+         cg = AttributeList(self.contact_groups)
+         for i in cg.fields:
+@@ -1848,7 +1860,10 @@
+         """ Returns a list of all Contact that belong to this Service """
+         get_object = lambda x: Contact.objects.get_by_shortname(x, cache_only=True)
+         list_of_shortnames = sorted(ObjectRelations.service_contacts[self.get_id()])
+-        return map(get_object, list_of_shortnames)
++        contacts = map(get_object, list_of_shortnames)
++        for cg in self.get_effective_contact_groups():
++            contacts += cg.get_effective_contacts()
++        return contacts
+ 
+     def get_effective_contact_groups(self):
+         """ Returns a list of all Contactgroup that belong to this Service """

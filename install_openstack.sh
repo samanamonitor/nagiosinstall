@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+# TODO: request credentials from user at install
+
 set -x
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
@@ -7,6 +10,11 @@ NAGIOS=/usr/local/nagios
 NAGIOS_ETC=${NAGIOS}/etc
 NAGIOS_BIN=${NAGIOS}/bin
 NAGIOS_LIBEXEC=${NAGIOS}/libexec
+NAGIOS_SNMP_COMMUNITY=N4g1osS4m4n4
+NAGIOS_NETBIOS_DOMAIN=SAMANA
+NAGIOS_FQDN_DOMAIN=samana.local
+NAGIOS_WMI_USER=samanasvc
+NAGIOS_WMI_PASSWORD=C1tr1xAdm1n
 LOGPATH=/tmp/install_log
 
 
@@ -105,7 +113,7 @@ install_nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     wget -P ${TEMPDIR} http://prdownloads.sourceforge.net/sourceforge/nagios/nagios-4.2.0.tar.gz
-    useradd nagios
+    useradd -m nagios
     groupadd nagcmd
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
@@ -138,7 +146,7 @@ install_nagios_plugins() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     wget -P ${TEMPDIR} http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
-    cd {TEMPDIR}
+    cd ${TEMPDIR}
     tar zxvf nagios-plugins-2.1.2.tar.gz
     cd nagios-plugins-2.1.2
     ./configure --with-nagios-user=nagios --with-nagios-group=nagios
@@ -171,9 +179,9 @@ install_pnp4nagios() {
     rm -Rf ${TEMPDIR}
 }
 
-install_check_bw() {
-    cp $DIR/support/check_bw.sh ${NAGIOS_LIBEXEC}
-    chown nagios.nagios ${NAGIOS_LIBEXEC}/check_bw.sh
+install_custom_plugins() {
+    cp $DIR/support/check_bw.sh ${DIR}/support/check_disk_smb_latency ${NAGIOS_LIBEXEC}
+    chown nagios.nagios ${NAGIOS_LIBEXEC}/check_bw.sh ${NAGIOS_LIBEXEC}/check_disk_smb_latency
 }
 
 install_check_samana() {
@@ -271,6 +279,8 @@ install_nagios_base_config() {
     cp -R etc/objects/environment/* /etc/nagios/objects/environment
     echo "cfg_dir=/etc/nagios/objects/samana" >> /etc/nagios/nagios.cfg
     echo "cfg_dir=/etc/nagios/objects/environment" >> /etc/nagios/nagios.cfg
+    chown -R nagios.nagios /etc/nagios/objects/samana /etc/nagios/objects/environment
+    chmod g+w environment/* samana/*
 }
 
 install_nagios_config() {
@@ -289,8 +299,41 @@ install_nagios_config() {
     cp etc/apache2/sites-available/nagios-config.conf /etc/apache2/sites-available/
     cd /etc/apache2/sites-enabled/
     ln -s ../sites-available/nagios-config.conf
+    cp check_config.sh reload_config.sh /var/www/nagios_config
+    chown nagios.nagios /var/www/nagios_config/check_config.sh
+    chown root.root /var/www/nagios_config/reload_config.sh
+    chmod u+s /var/www/nagios_config/check_config.sh /var/www/nagios_config/reload_config.sh
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
+}
+
+install_credentials() {
+    cat <<EOF >> /etc/nagios/resource.cfg
+# Sets \$USER3\$ for SNMP community
+\$USER3\$=${NAGIOS_SNMP_COMMUNITY}
+
+# NetScaler SNMPv3 user
+#$USER4$=nagiosmonitor
+
+# NETBIOS domain for multiple checks
+\$USER6\$=${NAGIOS_NETBIOS_DOMAIN}
+
+# WMI user for servers
+\$USER7\$=${NAGIOS_WMI_USER}
+
+# WMI user's password
+\$USER8\$=${NAGIOS_WMI_PASSWORD}
+
+# Path with authentication credentials for scripts
+\$USER9\$=/etc/nagios/samananagios.pw
+EOF
+    cat <<EOF > /etc/nagios/samananagios.pw
+username=${NAGIOS_WMI_USER}@${NAGIOS_FQDN_DOMAIN}
+password=${NAGIOS_WMI_PASSWORD}
+domain=
+EOF
+    chown nagios.nagios /etc/nagios/samananagios.pw
+    chmod 660 /etc/nagios/samananagios.pw
 }
 
 USERID=$(id -u)
@@ -306,7 +349,7 @@ install_nagios
 install_nagios_plugins
 install_nagios_sysctl
 install_pnp4nagios
-install_check_bw
+install_custom_plugins
 install_check_samana
 install_mibs
 install_pynag
@@ -315,6 +358,7 @@ install_slack_nagios
 install_check_wmi_plus
 install_nagios_base_config
 install_nagios_config
+install_credentials
 
 systemctl daemon-reload
 systemctl start nagios

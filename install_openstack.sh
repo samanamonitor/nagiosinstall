@@ -293,6 +293,11 @@ install_nagios_config() {
     rm -Rf ${TEMPDIR}
 }
 
+UID=$(id -u)
+if [ "${UID}" != "0" ]; then
+    echo "Please run using sudo or as root"
+    exit 1
+fi
 
 #resize_partition
 install_prereqs

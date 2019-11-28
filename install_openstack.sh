@@ -6,6 +6,7 @@
 set -x
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+WMIC_PATH=/usr/local/bin
 NAGIOS=/usr/local/nagios
 NAGIOS_ETC=${NAGIOS}/etc
 NAGIOS_BIN=${NAGIOS}/bin
@@ -99,9 +100,9 @@ install_wmi() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
-    cd {TEMPDIR}
+    cd ${TEMPDIR}
     ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" >> ${LOGPATH}/install_wmi.log
-    cp ${TEMPDIR}/bin/wmic /usr/local/bin/
+    cp ${TEMPDIR}/bin/wmic ${WMIC_PATH}/
     pip install --upgrade pywinrm >> ${LOGPATH}/install_wmi.log
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
@@ -253,6 +254,10 @@ install_check_wmi_plus() {
         ${NAGIOS_LIBEXEC}/check_wmi_plus.README.txt
     cp -R ${TEMPDIR}/etc/check_wmi_plus ${NAGIOS_ETC}
     chown -R nagios.nagios ${NAGIOS_ETC}/check_wmi_plus
+    cp ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf.sample \
+        ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf
+    sed -i -e "s|^\$base_dir=.*|\$base_dir='${NAGIOS_LIBEXEC}'|" \
+        ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf
     #sed -i "s|my \$conf_file=.*|my \$conf_file='/etc/nagios/check_wmi_plus/check_wmi_plus.conf';|" \
     #    ${NAGIOS_LIBEXEC}/check_wmi_plus.pl
     cd ${CURDIR}

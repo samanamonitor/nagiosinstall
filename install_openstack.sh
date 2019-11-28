@@ -190,9 +190,11 @@ install_check_samana() {
     git clone https://github.com/samanamonitor/check_samana.git ${TEMPDIR}
     cp ${TEMPDIR}/src/*.py ${NAGIOS_LIBEXEC}
     chown nagios.nagios ${NAGIOS_LIBEXEC}/*.py
+    sed -i -e "s|%NAGIOSETC%|${NAGIOS_ETC}|" ${NAGIOS_LIBEXEC}/check_samana.py
     chmod +x ${NAGIOS_LIBEXEC}/*.py
     mkdir ${NAGIOS_ETC}/check_samana
-    cp check_samana/etc/config.json ${NAGIOS_ETC}
+    cp ${TEMPDIR}/etc/config.json ${NAGIOS_ETC}/check_samana
+    chown -R nagios.nagios ${NAGIOS_ETC}/check_samana
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -280,7 +282,7 @@ install_nagios_base_config() {
     echo "cfg_dir=/etc/nagios/objects/samana" >> /etc/nagios/nagios.cfg
     echo "cfg_dir=/etc/nagios/objects/environment" >> /etc/nagios/nagios.cfg
     chown -R nagios.nagios /etc/nagios/objects/samana /etc/nagios/objects/environment
-    chmod g+w environment/* samana/*
+    chmod g+w /etc/nagios/objects/environment/* /etc/nagios/objects/samana/*
 }
 
 install_nagios_config() {

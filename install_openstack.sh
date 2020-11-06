@@ -2,6 +2,7 @@
 
 
 # TODO: request credentials from user at install
+# TODO: add proxy settings
 
 set -x
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )

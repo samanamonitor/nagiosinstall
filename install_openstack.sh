@@ -76,7 +76,9 @@ install_prereqs() {
         libdatetime-perl \
         build-essential \
         g++ \
-        python-dev"
+        python-dev \
+        libssl-dev \
+        libffi-dev"
 
     mkdir -p ${LOGPATH}
     apt-get update >> ${LOGPATH}/prerequisites.log
@@ -86,7 +88,7 @@ install_prereqs() {
     cpanm Date::Time >> ${LOGPATH}/prerequisites.log
     cpanm DateTime >> ${LOGPATH}/prerequisites.log
     (echo y; echo y; echo y) | sendmailconfig
-    python -m easy_install --upgrade pyOpenSSL
+    #python -m easy_install --upgrade pyOpenSSL
 
 
     #curl -s https://packages.microsoft.com/keys/microsoft.asc | apt-key add -

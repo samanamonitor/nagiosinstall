@@ -88,6 +88,7 @@ install_prereqs() {
     cpanm Date::Time >> ${LOGPATH}/prerequisites.log
     cpanm DateTime >> ${LOGPATH}/prerequisites.log
     (echo y; echo y; echo y) | sendmailconfig
+    pip install --upgrade pyOpenSSL
     #python -m easy_install --upgrade pyOpenSSL
 
 
@@ -106,7 +107,7 @@ install_wmi() {
     git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
     cd ${TEMPDIR}
     ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" >> ${LOGPATH}/install_wmi.log
-    cp ${TEMPDIR}/bin/wmic ${WMIC_PATH}/
+    install ${TEMPDIR}/Samba/source/bin/wmic ${WMIC_PATH}/
     pip install --upgrade pywinrm >> ${LOGPATH}/install_wmi.log
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}

@@ -171,7 +171,7 @@ install_pnp4nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     LIBS="rrdtool librrdtool-oo-perl"
-    apt install -y $LIBS
+    apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
     wget "https://sourceforge.net/projects/pnp4nagios/files/latest" -O ${TEMPDIR}/pnp4nagios.latest.tar.gz
     cd ${TEMPDIR}
     tar zxvf pnp4nagios.latest.tar.gz
@@ -219,7 +219,7 @@ install_pynag() {
 
 install_check_mssql() {
     LIBS="php-sybase"
-    apt install -y $LIBS
+    apt install -y $LIBS >> ${LOGPATH}/install_check_mssql.log
     install -o nagios -g nagios $DIR/support/check_mssql ${NAGIOS_LIBEXEC}
     #ACCEPT_EULA=Y apt-get -y install msodbcsql17 mssql-tools
     #apt-get -y install unixodbc-dev
@@ -238,19 +238,19 @@ install_check_mssql() {
 }
 
 install_slack_nagios() {
-    cpan HTTP::Request
-    cpan LWP::UserAgent
-    cpan LWP::Protocol::https
+    cpan HTTP::Request >> ${LOGPATH}/install_slack_nagios.log
+    cpan LWP::UserAgent >> ${LOGPATH}/install_slack_nagios.log
+    cpan LWP::Protocol::https >> ${LOGPATH}/install_slack_nagios.log
     install -o nagios -g nagios $DIR/support/slack_nagios.pl ${NAGIOS_LIBEXEC}
 }
 
 install_check_wmi_plus() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
-    cpan Number::Format
-    cpan Config::IniFiles
-    cpan Date::Time
-    cpan DateTime
+    cpan Number::Format >> ${LOGPATH}/install_check_wmi.log
+    cpan Config::IniFiles >> ${LOGPATH}/install_check_wmi.log
+    #cpan Date::Time
+    cpan DateTime >> ${LOGPATH}/install_check_wmi.log
 
     git clone https://github.com/samanamonitor/check_wmi_plus.git ${TEMPDIR}
     install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus_help.pl ${NAGIOS_LIBEXEC}

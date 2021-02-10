@@ -8,18 +8,10 @@ set -xe
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-WMIC_PATH=/usr/local/bin
-NAGIOS=/usr/local/nagios
-NAGIOS_ETC=${NAGIOS}/etc
-NAGIOS_BIN=${NAGIOS}/bin
-NAGIOS_LIBEXEC=${NAGIOS}/libexec
-NAGIOS_SNMP_COMMUNITY=N4g1osS4m4n4
-NAGIOS_NETBIOS_DOMAIN=SAMANA
-NAGIOS_FQDN_DOMAIN=samana.local
-NAGIOS_WMI_USER=samanasvc
-NAGIOS_WMI_PASSWORD=C1tr1xAdm1n
-LOGPATH=/tmp/install_log
-
+if [ ! -f $DIR/config.dat ]; then
+    echo "Configuration file not found. Use config.dat.example as a base"
+    exit 1
+fi
 
 ###############Resize partitions##########################
 resize_partition() {
@@ -84,10 +76,6 @@ install_prereqs() {
     mkdir -p ${LOGPATH}
     apt-get update >> ${LOGPATH}/prerequisites.log
     apt-get install -y $INSTALL_PKGS >> ${LOGPATH}/prerequisites.log
-    cpanm Number::Format >> ${LOGPATH}/prerequisites.log
-    cpanm Config::IniFiles >> ${LOGPATH}/prerequisites.log
-    cpanm Date::Time >> ${LOGPATH}/prerequisites.log
-    cpanm DateTime >> ${LOGPATH}/prerequisites.log
     (echo y; echo y; echo y) | sendmailconfig
     pip install --upgrade pyOpenSSL
     #python -m easy_install --upgrade pyOpenSSL
@@ -256,19 +244,21 @@ install_slack_nagios() {
 install_check_wmi_plus() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
+    cpan Number::Format
+    cpan Config::IniFiles
+    cpan Date::Time
+    cpan DateTime
+
     git clone https://github.com/samanamonitor/check_wmi_plus.git ${TEMPDIR}
-    cp ${TEMPDIR}/check_wmi_plus_help.pl \
-        ${TEMPDIR}/check_wmi_plus.pl \
-        ${TEMPDIR}/check_wmi_plus.README.txt \
-        ${NAGIOS_LIBEXEC}
-    chown nagios.nagios ${NAGIOS_LIBEXEC}/check_wmi_plus_help.pl \
-        ${NAGIOS_LIBEXEC}/check_wmi_plus.pl \
-        ${NAGIOS_LIBEXEC}/check_wmi_plus.README.txt
+    install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus_help.pl ${NAGIOS_LIBEXEC}
+    install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus.pl ${NAGIOS_LIBEXEC}
+    install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus.README.txt ${NAGIOS_LIBEXEC}
+    install -o nagios -g nagios ${TEMPDIR}/etc/check_wmi_plus ${NAGIOS_ETC}
     cp -R ${TEMPDIR}/etc/check_wmi_plus ${NAGIOS_ETC}
     chown -R nagios.nagios ${NAGIOS_ETC}/check_wmi_plus
     cp ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf.sample \
         ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf
-    sed -i -e "s|^\$base_dir=.*|\$base_dir='${NAGIOS_LIBEXEC}'|" \
+    sed -i -e "s|^\$base_dir=.*|\$base_dir='${NAGIOS_LIBEXEC}';|" \
         ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf
     #sed -i "s|my \$conf_file=.*|my \$conf_file='/etc/nagios/check_wmi_plus/check_wmi_plus.conf';|" \
     #    ${NAGIOS_LIBEXEC}/check_wmi_plus.pl
@@ -365,24 +355,29 @@ if [ "${USERID}" != "0" ]; then
     exit 1
 fi
 
-#resize_partition
-#install_prereqs
-install_wmi
-install_pywinrm
-install_nagios
-install_nagios_plugins
-#install_nagios_sysctl
-install_pnp4nagios
-install_check_samana
-install_mibs
-install_pynag
-install_check_mssql
-install_slack_nagios
-install_check_wmi_plus
-install_nagios_base_config
-install_nagios_config
-install_credentials
+case $1 in
+"installall")
+    #resize_partition
+    #install_prereqs
+    install_wmi
+    install_pywinrm
+    install_nagios
+    install_nagios_plugins
+    #install_nagios_sysctl
+    install_pnp4nagios
+    install_check_samana
+    install_mibs
+    install_pynag
+    install_check_mssql
+    install_slack_nagios
+    install_check_wmi_plus
+    #install_nagios_config
+    install_credentials
+    ;;
+    *)
+;;
+esac
 
-systemctl daemon-reload
-systemctl start nagios
-systemctl reload apache2
+#systemctl daemon-reload
+#systemctl start nagios
+#systemctl reload apache2

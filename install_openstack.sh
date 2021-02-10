@@ -227,8 +227,9 @@ install_pynag() {
 }
 
 install_check_mssql() {
-    cp $DIR/support/check_mssql ${NAGIOS_LIBEXEC}
-    chown nagios.nagios ${NAGIOS_LIBEXEC}/check_mssql
+    LIBS="php-sybase"
+    apt install -y $LIBS
+    install -o nagios -g nagios $DIR/support/check_mssql ${NAGIOS_LIBEXEC}
     #ACCEPT_EULA=Y apt-get -y install msodbcsql17 mssql-tools
     #apt-get -y install unixodbc-dev
     #apt install -y php7.0-dev
@@ -246,9 +247,10 @@ install_check_mssql() {
 }
 
 install_slack_nagios() {
-    cp $DIR/support/slack_nagios.pl ${NAGIOS_LIBEXEC}
-    chown nagios.nagios ${NAGIOS_LIBEXEC}/slack_nagios.pl
-    chmod +x ${NAGIOS_LIBEXEC}/slack_nagios.pl
+    cpan HTTP::Request
+    cpan LWP::UserAgent
+    cpan LWP::Protocol::https
+    install -o nagios -g nagios $DIR/support/slack_nagios.pl ${NAGIOS_LIBEXEC}
 }
 
 install_check_wmi_plus() {

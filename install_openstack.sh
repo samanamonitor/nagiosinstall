@@ -359,6 +359,7 @@ fi
 
 case $1 in
 "installall")
+    mkdir -p ${LOGPATH}
     #resize_partition
     #install_prereqs
     install_wmi

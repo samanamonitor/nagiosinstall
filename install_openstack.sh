@@ -95,7 +95,7 @@ install_pywinrm() {
 install_wmi() {
     # run the following commands on windows for winRM to be enabled
     # winrm quickconfig -transport:https
-    LIBS="git build-essential autoconf"
+    LIBS="git build-essential autoconf python"
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     apt install -y $LIBS

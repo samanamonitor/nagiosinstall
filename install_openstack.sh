@@ -256,7 +256,6 @@ install_check_wmi_plus() {
     install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus_help.pl ${NAGIOS_LIBEXEC}
     install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus.pl ${NAGIOS_LIBEXEC}
     install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus.README.txt ${NAGIOS_LIBEXEC}
-    install -o nagios -g nagios ${TEMPDIR}/etc/check_wmi_plus ${NAGIOS_ETC}
     cp -R ${TEMPDIR}/etc/check_wmi_plus ${NAGIOS_ETC}
     chown -R nagios.nagios ${NAGIOS_ETC}/check_wmi_plus
     cp ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf.sample \
@@ -377,6 +376,8 @@ case $1 in
     install_check_wmi_plus
     #install_nagios_config
     install_credentials
+    /etc/init.d/apache2 restart
+    /etc/init.d/nagios restart
     ;;
     *)
 ;;

@@ -13,6 +13,8 @@ if [ ! -f $DIR/config.dat ]; then
     exit 1
 fi
 
+. $DIR/config.dat
+
 ###############Resize partitions##########################
 resize_partition() {
     swapoff /dev/xvda5
@@ -98,7 +100,7 @@ install_wmi() {
     LIBS="git build-essential autoconf python"
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
-    apt install -y $LIBS
+    apt install -y $LIBS >> ${LOGPATH}/install_wmi.log
     git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
     cd ${TEMPDIR}
     ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" >> ${LOGPATH}/install_wmi.log

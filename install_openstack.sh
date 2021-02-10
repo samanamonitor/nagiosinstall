@@ -78,6 +78,7 @@ install_prereqs() {
         g++ \
         python-dev \
         libssl-dev \
+        python-openssl \
         libffi-dev"
 
     mkdir -p ${LOGPATH}
@@ -98,17 +99,22 @@ install_prereqs() {
 
 }
 
+install_pywinrm() {
+    apt install -y python-winrm
+}
+
 ###  Install wmi
 install_wmi() {
     # run the following commands on windows for winRM to be enabled
     # winrm quickconfig -transport:https
+    LIBS="git build-essential autoconf"
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
+    apt install -y $LIBS
     git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
     cd ${TEMPDIR}
     ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" >> ${LOGPATH}/install_wmi.log
     install ${TEMPDIR}/Samba/source/bin/wmic ${WMIC_PATH}/
-    pip install --upgrade pywinrm >> ${LOGPATH}/install_wmi.log
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -118,11 +124,13 @@ install_wmi() {
 install_nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
-    wget -P ${TEMPDIR} http://prdownloads.sourceforge.net/sourceforge/nagios/nagios-4.2.0.tar.gz
+    LIBS="wget apache2 build-essential libgd-dev sendmail mailutils unzip libapache2-mod-php"
+    apt install -y $LIBS
     useradd -m nagios
     groupadd nagcmd
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
+    wget -P ${TEMPDIR} http://prdownloads.sourceforge.net/sourceforge/nagios/nagios-4.2.0.tar.gz
     cd ${TEMPDIR}
     tar -zxvf nagios-4.2.0.tar.gz
     cd nagios-4.2.0
@@ -143,6 +151,7 @@ install_nagios() {
     ln -s /etc/init.d/nagios /etc/rcS.d/S99nagios
     htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin Samana81.
     ln -s /usr/local/nagios/etc /etc/nagios
+    /etc/init.d/apache2 restart
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -151,13 +160,17 @@ install_nagios() {
 install_nagios_plugins() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
+    LIBS="libfreeradius-client-dev libldap2-dev libkrb5-dev libssl-dev iputils-ping smbclient snmp \
+        libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libsnmp-perl"
+    apt install -y $LIBS
+    cpan Net::SNMP >> ${LOGPATH}/install_nagios.log
     wget -P ${TEMPDIR} http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
     cd ${TEMPDIR}
     tar zxvf nagios-plugins-2.1.2.tar.gz
     cd nagios-plugins-2.1.2
-    ./configure --with-nagios-user=nagios --with-nagios-group=nagios
-    make
-    make install
+    ./configure --with-nagios-user=nagios --with-nagios-group=nagios >> ${LOGPATH}/install_nagios.log
+    make >> ${LOGPATH}/install_nagios.log
+    make install >> ${LOGPATH}/install_nagios.log
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -166,13 +179,16 @@ install_nagios_plugins() {
 install_pnp4nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
+    LIBS="rrdtool librrdtool-oo-perl"
+    apt install -y $LIBS
     wget "https://sourceforge.net/projects/pnp4nagios/files/latest" -O ${TEMPDIR}/pnp4nagios.latest.tar.gz
     cd ${TEMPDIR}
     tar zxvf pnp4nagios.latest.tar.gz
     cd pnp4nagios-0.6.26
-    ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd  --with-httpd-conf=/etc/apache2/sites-available
-    make all
-    make fullinstall
+    ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd  \
+        --with-httpd-conf=/etc/apache2/sites-available >> ${LOGPATH}/install_nagios.log
+    make all >> ${LOGPATH}/install_nagios.log
+    make fullinstall >> ${LOGPATH}/install_nagios.log
 
     # TODO: change configure to install apache files in the correct location
     #mv /etc/httpd/conf.d/pnp4nagios.conf /etc/apache2/sites-available/
@@ -185,22 +201,11 @@ install_pnp4nagios() {
     rm -Rf ${TEMPDIR}
 }
 
-install_custom_plugins() {
-    cp $DIR/support/check_bw.sh ${DIR}/support/check_disk_smb_latency ${NAGIOS_LIBEXEC}
-    chown nagios.nagios ${NAGIOS_LIBEXEC}/check_bw.sh ${NAGIOS_LIBEXEC}/check_disk_smb_latency
-}
-
 install_check_samana() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     git clone https://github.com/samanamonitor/check_samana.git ${TEMPDIR}
-    cp ${TEMPDIR}/src/*.py ${NAGIOS_LIBEXEC}
-    chown nagios.nagios ${NAGIOS_LIBEXEC}/*.py
-    sed -i -e "s|%NAGIOSETC%|${NAGIOS_ETC}|" ${NAGIOS_LIBEXEC}/check_samana.py
-    chmod +x ${NAGIOS_LIBEXEC}/*.py
-    mkdir ${NAGIOS_ETC}/check_samana
-    cp ${TEMPDIR}/etc/config.json ${NAGIOS_ETC}/check_samana
-    chown -R nagios.nagios ${NAGIOS_ETC}/check_samana
+    make -C ${TEMPDIR} install
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -359,13 +364,13 @@ if [ "${USERID}" != "0" ]; then
 fi
 
 #resize_partition
-install_prereqs
+#install_prereqs
 install_wmi
+install_pywinrm
 install_nagios
 install_nagios_plugins
-install_nagios_sysctl
+#install_nagios_sysctl
 install_pnp4nagios
-install_custom_plugins
 install_check_samana
 install_mibs
 install_pynag

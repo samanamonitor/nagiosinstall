@@ -142,6 +142,7 @@ install_nagios() {
     htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin Samana81.
     ln -s /usr/local/nagios/etc /etc/nagios
     /etc/init.d/apache2 restart
+    /etc/init.d/nagios start
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -153,7 +154,7 @@ install_nagios_plugins() {
     LIBS="libfreeradius-client-dev libldap2-dev libkrb5-dev libssl-dev iputils-ping smbclient snmp \
         libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libsnmp-perl"
     apt install -y $LIBS
-    cpan Net::SNMP >> ${LOGPATH}/install_nagios.log
+    PERL_MM_USE_DEFAULT=1 cpan Net::SNMP >> ${LOGPATH}/install_nagios.log
     wget -P ${TEMPDIR} http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
     cd ${TEMPDIR}
     tar zxvf nagios-plugins-2.1.2.tar.gz

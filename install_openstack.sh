@@ -90,7 +90,10 @@ install_prereqs() {
 }
 
 install_pywinrm() {
-    apt install -y python-winrm >> ${LOGPATH}/install_pywinrm.log
+    #apt install -y python-winrm >> ${LOGPATH}/install_pywinrm.log
+    apt install -y python-pip
+    pip install requests_ntlm
+    pip install pywinrm
 }
 
 ###  Install wmi
@@ -378,7 +381,19 @@ EOF
 }
 
 install_cleanup() {
-    echo "TODO:"
+    apt clean
+    rm /var/lib/apt/lists/*
+    > /var/log/alternatives.log
+    > /var/log/bootstrap.log
+    > /var/log/dmesg
+    > /var/log/dpkg.log
+    > /var/log/faillog
+    > /var/log/fontconfig.log
+    > /var/log/lastlog
+    > /var/log/apt/history.log
+    > /var/log/apt/term.log
+    > /var/log/fsck/checkfs
+    > /var/log/fsck/checkroot
 }
 
 USERID=$(id -u)

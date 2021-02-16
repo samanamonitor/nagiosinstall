@@ -115,7 +115,7 @@ install_nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     LIBS="wget apache2 build-essential libgd-dev sendmail mailutils unzip libapache2-mod-php"
-    apt install -y $LIBS
+    apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
     useradd -m nagios
     groupadd nagcmd
     usermod -a -G nagcmd nagios
@@ -151,7 +151,7 @@ install_nagios_plugins() {
     local CURDIR=$(pwd)
     LIBS="libfreeradius-client-dev libldap2-dev libkrb5-dev libssl-dev iputils-ping smbclient snmp \
         libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libsnmp-perl"
-    apt install -y $LIBS
+    apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
     PERL_MM_USE_DEFAULT=1 cpan Net::SNMP >> ${LOGPATH}/install_nagios.log
     wget -P ${TEMPDIR} http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
     cd ${TEMPDIR}

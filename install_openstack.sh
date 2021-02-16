@@ -90,7 +90,7 @@ install_prereqs() {
 }
 
 install_pywinrm() {
-    apt install -y python-winrm
+    apt install -y python-winrm >> ${LOGPATH}/install_pywinrm.log
 }
 
 ###  Install wmi
@@ -141,8 +141,6 @@ install_nagios() {
     ln -s /etc/init.d/nagios /etc/rcS.d/S99nagios
     htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin Samana81.
     ln -s /usr/local/nagios/etc /etc/nagios
-    /etc/init.d/apache2 restart
-    /etc/init.d/nagios start
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -195,10 +193,16 @@ install_pnp4nagios() {
 install_check_samana() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
+    LIBS="etcd python-etcd ansible"
+    apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
     git clone https://github.com/samanamonitor/check_samana.git ${TEMPDIR}
     make -C ${TEMPDIR} install
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
+    cat <<EOF >> /etc/default/etcd
+ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+ETCD_ADVERTISE_CLIENT_URLS="http://0.0.0.0:2379"
+EOF
 }
 
 install_mibs() {
@@ -351,6 +355,31 @@ EOF
     chmod 660 /etc/nagios/samananagios.pw
 }
 
+docker_start() {
+    cat <<EOF > /start.sh
+#!/bin/bash
+
+/usr/local/nagios/bin/nagios /etc/nagios/nagios.cfg &
+status=$?
+if [ $status -ne 0 ]; then
+  echo "Failed to start Nagios: $status"
+  exit $status
+fi
+
+APACHE_RUN_USER=www-data APACHE_RUN_GROUP=www-data APACHE_LOG_DIR=/var/log/apache2 /usr/sbin/apachectl -DFOREGROUND &
+
+/usr/local/pnp4nagios/bin/npcd -f /usr/local/pnp4nagios/etc/npcd.cfg &
+
+/usr/bin/etcd &
+
+/bin/bash
+EOF
+}
+
+install_cleanup() {
+
+}
+
 USERID=$(id -u)
 if [ "${USERID}" != "0" ]; then
     echo "Please run using sudo or as root"
@@ -376,11 +405,11 @@ case $1 in
     install_check_wmi_plus
     #install_nagios_config
     install_credentials
-    /etc/init.d/apache2 restart
-    /etc/init.d/nagios restart
+    docker_start
+    install_cleanup
     ;;
-    *)
-;;
+*)
+    ;;
 esac
 
 #systemctl daemon-reload

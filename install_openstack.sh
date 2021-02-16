@@ -103,7 +103,8 @@ install_wmi() {
     apt install -y $LIBS >> ${LOGPATH}/install_wmi.log
     git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
     cd ${TEMPDIR}
-    ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" CFLAGS="-Wno-discarded-qualifiers -Wno-incompatible-pointer-types" >> ${LOGPATH}/install_wmi.log
+    ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" \
+        CFLAGS="-Wno-discarded-qualifiers -Wno-incompatible-pointer-types" >> ${LOGPATH}/install_wmi.log
     install ${TEMPDIR}/Samba/source/bin/wmic ${WMIC_PATH}/
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}

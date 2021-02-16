@@ -153,8 +153,8 @@ install_nagios() {
 install_nagios_plugins() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
-    LIBS="libfreeradius-client-dev libldap2-dev libkrb5-dev libssl-dev iputils-ping smbclient snmp \
-        libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libsnmp-perl"
+    LIBS="libldap2-dev libkrb5-dev libssl-dev iputils-ping smbclient snmp \
+        libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libsnmp-perl" # removed libfreeradius-client-dev for bionic
     apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
     PERL_MM_USE_DEFAULT=1 cpan Net::SNMP >> ${LOGPATH}/install_nagios.log
     wget -P ${TEMPDIR} http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz

@@ -116,6 +116,7 @@ install_nagios() {
     local CURDIR=$(pwd)
     LIBS="wget apache2 build-essential libgd-dev sendmail mailutils unzip libapache2-mod-php"
     apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
+    (echo y; echo y; echo y) | sendmailconfig
     useradd -m nagios
     groupadd nagcmd
     usermod -a -G nagcmd nagios

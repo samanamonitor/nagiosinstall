@@ -377,7 +377,7 @@ EOF
 }
 
 install_cleanup() {
-
+    echo "TODO:"
 }
 
 USERID=$(id -u)

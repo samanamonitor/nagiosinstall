@@ -23,7 +23,7 @@ resize_partition() {
     (echo d; echo 5; echo d; echo 2; echo d; echo n; echo p; echo 1; echo 2048; echo +7.5G; echo n; echo p; echo 2; echo 15706112; echo 16750591; echo a; echo 1; echo t; echo 2; echo 82; echo w) | fdisk /dev/xvda
     partprobe
     resize2fs /dev/xvda1
-    mkswap /dev/xvda2 >> ${LOGPATH}/swaplog.log
+    mkswap /dev/xvda2
     swapon /dev/xvda2
     sed -i '1d' /install_log/swaplog.log
     sed -i 's/^no label, //' /install_log/swaplog.log
@@ -76,8 +76,8 @@ install_prereqs() {
         libffi-dev"
 
     mkdir -p ${LOGPATH}
-    apt-get update >> ${LOGPATH}/prerequisites.log
-    apt-get install -y $INSTALL_PKGS >> ${LOGPATH}/prerequisites.log
+    apt-get update
+    apt-get install -y $INSTALL_PKGS
     (echo y; echo y; echo y) | sendmailconfig
     pip install --upgrade pyOpenSSL
     #python -m easy_install --upgrade pyOpenSSL
@@ -90,7 +90,7 @@ install_prereqs() {
 }
 
 install_pywinrm() {
-    #apt install -y python-winrm >> ${LOGPATH}/install_pywinrm.log
+    #apt install -y python-winrm
     apt install -y python-pip
     pip install requests_ntlm
     pip install pywinrm
@@ -103,10 +103,10 @@ install_wmi() {
     LIBS="git build-essential autoconf python"
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
-    apt install -y $LIBS >> ${LOGPATH}/install_wmi.log
+    apt install -y $LIBS
     git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
     cd ${TEMPDIR}
-    ulimit -n 100000 && make "CPP=gcc -E -ffreestanding" >> ${LOGPATH}/install_wmi.log
+    ulimit -n 100000 && make "CPP=gcc -E -ffreestanding"
     install ${TEMPDIR}/Samba/source/bin/wmic ${WMIC_PATH}/
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
@@ -118,7 +118,7 @@ install_nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     LIBS="wget apache2 build-essential libgd-dev sendmail mailutils unzip libapache2-mod-php"
-    apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
+    DEBIAN_FRONTEND="noninteractive" apt install -y $LIBS
     (echo y; echo y; echo y) | sendmailconfig
     useradd -m nagios
     groupadd nagcmd
@@ -130,16 +130,16 @@ install_nagios() {
     cd nagios-4.2.0
     ./configure --with-nagios-group=nagios \
         --with-command-group=nagcmd \
-        --with-httpd-conf=/etc/apache2/sites-available >> ${LOGPATH}/install_nagios.log
-    make all  >> ${LOGPATH}/install_nagios.log
-    make install  >> ${LOGPATH}/install_nagios.log
-    make install-init >> ${LOGPATH}/install_nagios.log
-    make install-config >> ${LOGPATH}/install_nagios.log
-    make install-commandmode >> ${LOGPATH}/install_nagios.log
+        --with-httpd-conf=/etc/apache2/sites-available
+    make all 
+    make install 
+    make install-init
+    make install-config
+    make install-commandmode
     /usr/bin/install -c -m 644 sample-config/httpd.conf /etc/apache2/sites-available/nagios.conf
     ln -s /etc/apache2/sites-available/nagios.conf /etc/apache2/sites-enabled/
     cp -R contrib/eventhandlers/ /usr/local/nagios/libexec/
-    /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg >> ${LOGPATH}/install_nagios.log
+    /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
     a2enmod rewrite
     a2enmod cgi
     ln -s /etc/init.d/nagios /etc/rcS.d/S99nagios
@@ -155,15 +155,15 @@ install_nagios_plugins() {
     local CURDIR=$(pwd)
     LIBS="libldap2-dev libkrb5-dev libssl-dev iputils-ping smbclient snmp \
         libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libsnmp-perl" # removed libfreeradius-client-dev for bionic
-    apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
-    PERL_MM_USE_DEFAULT=1 cpan Net::SNMP >> ${LOGPATH}/install_nagios.log
+    apt install -y $LIBS
+    PERL_MM_USE_DEFAULT=1 cpan Net::SNMP
     wget -P ${TEMPDIR} http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
     cd ${TEMPDIR}
     tar zxvf nagios-plugins-2.1.2.tar.gz
     cd nagios-plugins-2.1.2
-    ./configure --with-nagios-user=nagios --with-nagios-group=nagios >> ${LOGPATH}/install_nagios.log
-    make >> ${LOGPATH}/install_nagios.log
-    make install >> ${LOGPATH}/install_nagios.log
+    ./configure --with-nagios-user=nagios --with-nagios-group=nagios
+    make
+    make install
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -173,15 +173,15 @@ install_pnp4nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     LIBS="rrdtool librrdtool-oo-perl"
-    apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
+    apt install -y $LIBS
     wget "https://sourceforge.net/projects/pnp4nagios/files/latest" -O ${TEMPDIR}/pnp4nagios.latest.tar.gz
     cd ${TEMPDIR}
     tar zxvf pnp4nagios.latest.tar.gz
     cd pnp4nagios-0.6.26
     ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd  \
-        --with-httpd-conf=/etc/apache2/sites-available >> ${LOGPATH}/install_nagios.log
-    make all >> ${LOGPATH}/install_nagios.log
-    make fullinstall >> ${LOGPATH}/install_nagios.log
+        --with-httpd-conf=/etc/apache2/sites-available
+    make all
+    make fullinstall
 
     # TODO: change configure to install apache files in the correct location
     #mv /etc/httpd/conf.d/pnp4nagios.conf /etc/apache2/sites-available/
@@ -198,7 +198,7 @@ install_check_samana() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     LIBS="etcd python-etcd ansible"
-    apt install -y $LIBS >> ${LOGPATH}/install_nagios.log
+    apt install -y $LIBS
     git clone https://github.com/samanamonitor/check_samana.git ${TEMPDIR}
     make -C ${TEMPDIR} install
     cd ${CURDIR}
@@ -223,7 +223,7 @@ install_pynag() {
 
 install_check_mssql() {
     LIBS="php-sybase"
-    apt install -y $LIBS >> ${LOGPATH}/install_check_mssql.log
+    apt install -y $LIBS
     install -o nagios -g nagios $DIR/support/check_mssql ${NAGIOS_LIBEXEC}
     #ACCEPT_EULA=Y apt-get -y install msodbcsql17 mssql-tools
     #apt-get -y install unixodbc-dev
@@ -242,19 +242,19 @@ install_check_mssql() {
 }
 
 install_slack_nagios() {
-    cpan HTTP::Request >> ${LOGPATH}/install_slack_nagios.log
-    cpan LWP::UserAgent >> ${LOGPATH}/install_slack_nagios.log
-    cpan LWP::Protocol::https >> ${LOGPATH}/install_slack_nagios.log
+    cpan HTTP::Request
+    cpan LWP::UserAgent
+    cpan LWP::Protocol::https
     install -o nagios -g nagios $DIR/support/slack_nagios.pl ${NAGIOS_LIBEXEC}
 }
 
 install_check_wmi_plus() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
-    cpan Number::Format >> ${LOGPATH}/install_check_wmi.log
-    cpan Config::IniFiles >> ${LOGPATH}/install_check_wmi.log
+    cpan Number::Format
+    cpan Config::IniFiles
     #cpan Date::Time
-    cpan DateTime >> ${LOGPATH}/install_check_wmi.log
+    cpan DateTime
 
     git clone https://github.com/samanamonitor/check_wmi_plus.git ${TEMPDIR}
     install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus_help.pl ${NAGIOS_LIBEXEC}

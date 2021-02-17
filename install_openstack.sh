@@ -418,7 +418,7 @@ case $1 in
     #install_nagios_config
     install_credentials
     docker_start
-    install_cleanup
+    #install_cleanup
     ;;
 *)
     ;;

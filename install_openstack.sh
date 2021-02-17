@@ -203,10 +203,6 @@ install_check_samana() {
     make -C ${TEMPDIR} install
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
-    cat <<EOF >> /etc/default/etcd
-ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
-ETCD_ADVERTISE_CLIENT_URLS="http://0.0.0.0:2379"
-EOF
 }
 
 install_mibs() {
@@ -374,7 +370,7 @@ APACHE_RUN_USER=www-data APACHE_RUN_GROUP=www-data APACHE_LOG_DIR=/var/log/apach
 
 /usr/local/pnp4nagios/bin/npcd -f /usr/local/pnp4nagios/etc/npcd.cfg &
 
-/usr/bin/etcd &
+ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379 ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379 ETCD_DATA_DIR="/var/lib/etcd/default" /usr/bin/etcd &
 
 /bin/bash
 EOF

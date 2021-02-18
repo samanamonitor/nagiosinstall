@@ -382,6 +382,7 @@ ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379 ETCD_LISTEN_CLIENT_URLS=http://0.
 
 /bin/bash
 EOF
+    chmod +x /start.sh
 }
 
 install_cleanup() {

@@ -384,7 +384,7 @@ EOF
 
 install_cleanup() {
     apt clean
-    rm /var/lib/apt/lists/*
+    rm $(find /var/lib/apt/lists/ -type f )
     > /var/log/alternatives.log
     > /var/log/bootstrap.log
     > /var/log/dmesg

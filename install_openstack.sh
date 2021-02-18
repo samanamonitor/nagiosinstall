@@ -203,13 +203,10 @@ install_check_samana() {
     make -C ${TEMPDIR} install
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
-    ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379 \
-        ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379 \
-        ETCD_DATA_DIR="/var/lib/etcd/default" /usr/bin/etcd &
-    local PID=$!
+    /etc/init.d/etcd start
     etcdctl setdir /samanamonitor/data
     etcdctl setdir /samanamonitor/config
-    kill $PID
+    /etc/init.d/etcd stop
 
 }
 

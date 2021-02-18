@@ -2,6 +2,7 @@ FROM ubuntu:bionic
 EXPOSE 80
 EXPOSE 443
 EXPOSE 2379
+TAG samanamon:v1
 RUN apt update
 RUN apt install -y git
 RUN mkdir /usr/src/samanamonitor

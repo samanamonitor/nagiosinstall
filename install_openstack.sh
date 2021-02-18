@@ -203,6 +203,14 @@ install_check_samana() {
     make -C ${TEMPDIR} install
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
+    ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379 \
+        ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379 \
+        ETCD_DATA_DIR="/var/lib/etcd/default" /usr/bin/etcd &
+    local PID=$!
+    etcdctl setdir /samanamonitor/data
+    etcdctl setdir /samanamonitor/config
+    kill $PID
+
 }
 
 install_mibs() {
@@ -388,8 +396,6 @@ install_cleanup() {
     > /var/log/lastlog
     > /var/log/apt/history.log
     > /var/log/apt/term.log
-    > /var/log/fsck/checkfs
-    > /var/log/fsck/checkroot
 }
 
 USERID=$(id -u)
@@ -418,12 +424,9 @@ case $1 in
     #install_nagios_config
     install_credentials
     docker_start
-    #install_cleanup
+    install_cleanup
     ;;
 *)
     ;;
 esac
 
-#systemctl daemon-reload
-#systemctl start nagios
-#systemctl reload apache2

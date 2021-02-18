@@ -1,4 +1,4 @@
-FROM ubuntu:bionic AS samanamon:v1
+FROM ubuntu:bionic AS samanamon
 EXPOSE 80
 EXPOSE 443
 EXPOSE 2379

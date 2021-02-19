@@ -192,6 +192,7 @@ install_pnp4nagios() {
     ln -s /etc/init.d/npcd /etc/rcS.d/S98npcd
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
+    patch /usr/local/pnp4nagios/share/application/models/data.php $DIR/pnp4nagios.patch
 }
 
 install_check_samana() {

@@ -172,7 +172,7 @@ install_nagios_plugins() {
 install_pnp4nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
-    LIBS="rrdtool librrdtool-oo-perl"
+    LIBS="rrdtool librrdtool-oo-perl php-xml"
     apt install -y $LIBS
     wget "https://sourceforge.net/projects/pnp4nagios/files/latest" -O ${TEMPDIR}/pnp4nagios.latest.tar.gz
     cd ${TEMPDIR}

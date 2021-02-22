@@ -3,6 +3,9 @@
 IMAGE_URL="" # s3 url to samanamonitor.tgz image
 IMAGE=samanamon:v1
 NAGIOS_IP=$1
+SLACK_DOMAIN=samana.slack.com
+SLACK_TOKEN=0N97lXlClhtS79ue1bQtci2a
+SLACK_CHANNEL=#nagios-test
 
 if [ -z "$NAGIOS_IP" ]; then
     echo "Usage: $0 <ip address>"
@@ -50,6 +53,35 @@ docker run -p 80:80 -p 443:443 -p 2379:2379 \
 
 sed -i -e "/USER12/d" -e "/USER13/d" /usr/local/nagios/etc/resource.cfg
 cat <<EOF >> /usr/local/nagios/etc/resource.cfg
+# Sets \$USER3\$ for SNMP community
+\$USER3\$=${NAGIOS_SNMP_COMMUNITY}
+
+# NetScaler SNMPv3 user
+#\$USER4\$=nagiosmonitor
+
+# NETBIOS domain for multiple checks
+\$USER6\$=${NAGIOS_NETBIOS_DOMAIN}
+
+# WMI user for servers
+\$USER7\$=${NAGIOS_WMI_USER}
+
+# WMI user's password
+\$USER8\$=${NAGIOS_WMI_PASSWORD}
+
+# Path with authentication credentials for scripts
+\$USER9\$=/etc/nagios/samananagios.pw
+
 \$USER12\$=http://$NAGIOS_IP/samanamon.ps1
 \$USER13\$=-SamanaMonitorURI http://$NAGIOS_IP:2379
+\$USER14\$=$SLACK_DOMAIN
+\$USER15\$=$SLACK_TOKEN
+\$USER16\$=$SLACK_CHANNEL
 EOF
+
+cat <<EOF > /usr/local/nagios/etc/samananagios.pw
+username=${NAGIOS_WMI_USER}@${NAGIOS_FQDN_DOMAIN}
+password=${NAGIOS_WMI_PASSWORD}
+domain=
+EOF
+chown nagios.nagios /etc/nagios/samananagios.pw
+chmod 660 /etc/nagios/samananagios.pw

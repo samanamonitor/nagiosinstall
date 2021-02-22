@@ -1,5 +1,16 @@
 #!/bin/bash
 
+set -xe
+
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+if [ ! -f $DIR/config.dat ]; then
+    echo "Configuration file not found. Use config.dat.example as a base"
+    exit 1
+fi
+
+. $DIR/config.dat
+
 NAGIOS_IP=$1
 
 if [ -z "$NAGIOS_IP" ]; then
@@ -8,7 +19,9 @@ if [ -z "$NAGIOS_IP" ]; then
 fi
 
 apt install -y wget docker.io jq
-wget -O - ${IMAGE_URL} | docker load
+if ! docker image inspect $IMAGE 2&> /dev/null; then
+    wget -O - ${IMAGE_URL} | docker load
+fi
 
 docker run -p 80:80 -p 443:443 -p 2379:2379 \
     --mount source=nagios_etc,target=/usr/local/nagios/etc \

@@ -15,24 +15,6 @@ fi
 
 . $DIR/config.dat
 
-###############Resize partitions##########################
-resize_partition() {
-    swapoff /dev/xvda5
-    apt-get -y install parted
-    mkdir /install_log
-    (echo d; echo 5; echo d; echo 2; echo d; echo n; echo p; echo 1; echo 2048; echo +7.5G; echo n; echo p; echo 2; echo 15706112; echo 16750591; echo a; echo 1; echo t; echo 2; echo 82; echo w) | fdisk /dev/xvda
-    partprobe
-    resize2fs /dev/xvda1
-    mkswap /dev/xvda2
-    swapon /dev/xvda2
-    sed -i '1d' /install_log/swaplog.log
-    sed -i 's/^no label, //' /install_log/swaplog.log
-    sed  -i '/UUID/s/$/ none            swap    sw              0       0/' /install_log/swaplog.log
-    cp /etc/fstab /etc/fstab.bak
-    sed -i '/xvda5/r /install_log/swaplog.log' /etc/fstab
-    sed -i '12d' /etc/fstab
-}
-
 ##############Install prerequisites packages##############
 install_prereqs() {
     INSTALL_PKGS="apache2 \
@@ -86,11 +68,9 @@ install_prereqs() {
     #curl -s https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
     #bash -c "curl -s https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list"
     #apt-get update
-
 }
 
 install_pywinrm() {
-    #apt install -y python-winrm
     apt install -y python-pip
     pip install requests_ntlm
     pip install pywinrm
@@ -231,18 +211,6 @@ install_check_mssql() {
     LIBS="php-sybase"
     apt install -y $LIBS
     install -o nagios -g nagios $DIR/support/check_mssql ${NAGIOS_LIBEXEC}
-    #ACCEPT_EULA=Y apt-get -y install msodbcsql17 mssql-tools
-    #apt-get -y install unixodbc-dev
-    #apt install -y php7.0-dev
-    #pecl install sqlsrv-5.3.0
-    #pecl install pdo_sqlsrv-5.3.0
-    #cat <<EOF | tee /etc/php/7.0/mods-available/pdo_sqlsrv.ini
-    #; configuration for php sqlite3 module
-    #; priority=30
-    #extension=pdo_sqlsrv.so
-    #EOF
-    #ln -s /etc/php/7.0/mods-available/pdo_sqlsrv.ini /etc/php/7.0/apache2/conf.d/20-pdo_sqlsrv.ini
-    #ln -s /etc/php/7.0/mods-available/pdo_sqlsrv.ini /etc/php/7.0/cli/conf.d/20-pdo_sqlsrv.ini
     sed -i '/^;\s\+tds\s\+version/a tds version = 8.0' \
         /etc/freetds/freetds.conf
 }
@@ -276,25 +244,6 @@ install_check_wmi_plus() {
     #    ${NAGIOS_LIBEXEC}/check_wmi_plus.pl
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
-}
-
-install_nagios_sysctl() {
-    cat <<EOF > /lib/systemd/system/nagios.service
-[Unit]
-Description=Nagios
-BindTo=network.target
-
-
-[Install]
-WantedBy=multi-user.target
-
-[Service]
-User=nagios
-Group=nagios
-Type=simple
-ExecStart=${NAGIOS_BIN}/nagios /etc/nagios/nagios.cfg
-ExecReload=/bin/kill -HUP \$MAINPID
-EOF
 }
 
 install_nagios_base_config() {
@@ -345,55 +294,8 @@ install_nagios_config() {
     rm -Rf ${TEMPDIR}
 }
 
-install_credentials() {
-    cat <<EOF >> /etc/nagios/resource.cfg
-# Sets \$USER3\$ for SNMP community
-\$USER3\$=${NAGIOS_SNMP_COMMUNITY}
-
-# NetScaler SNMPv3 user
-#$USER4$=nagiosmonitor
-
-# NETBIOS domain for multiple checks
-\$USER6\$=${NAGIOS_NETBIOS_DOMAIN}
-
-# WMI user for servers
-\$USER7\$=${NAGIOS_WMI_USER}
-
-# WMI user's password
-\$USER8\$=${NAGIOS_WMI_PASSWORD}
-
-# Path with authentication credentials for scripts
-\$USER9\$=/etc/nagios/samananagios.pw
-EOF
-    cat <<EOF > /etc/nagios/samananagios.pw
-username=${NAGIOS_WMI_USER}@${NAGIOS_FQDN_DOMAIN}
-password=${NAGIOS_WMI_PASSWORD}
-domain=
-EOF
-    chown nagios.nagios /etc/nagios/samananagios.pw
-    chmod 660 /etc/nagios/samananagios.pw
-}
-
 docker_start() {
-    cat <<EOF > /start.sh
-#!/bin/bash
-
-/usr/local/nagios/bin/nagios /etc/nagios/nagios.cfg &
-status=$?
-if [ $status -ne 0 ]; then
-  echo "Failed to start Nagios: $status"
-  exit $status
-fi
-
-APACHE_RUN_USER=www-data APACHE_RUN_GROUP=www-data APACHE_LOG_DIR=/var/log/apache2 /usr/sbin/apachectl -DFOREGROUND &
-
-/usr/local/pnp4nagios/bin/npcd -f /usr/local/pnp4nagios/etc/npcd.cfg &
-
-ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379 ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379 ETCD_DATA_DIR="/var/lib/etcd/default" /usr/bin/etcd &
-
-/bin/bash
-EOF
-    chmod +x /start.sh
+    install -o root -g root -m 0755 $DIR/start.sh /start.sh
 }
 
 install_cleanup() {
@@ -425,7 +327,6 @@ case $1 in
     install_pywinrm
     install_nagios
     install_nagios_plugins
-    #install_nagios_sysctl
     install_pnp4nagios
     install_check_samana
     install_mibs
@@ -434,7 +335,6 @@ case $1 in
     install_slack_nagios
     install_check_wmi_plus
     #install_nagios_config
-    install_credentials
     docker_start
     install_cleanup
     ;;

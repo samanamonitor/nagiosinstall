@@ -1,12 +1,17 @@
-WMIC_PATH=/usr/local/bin
-NAGIOS=/usr/local/nagios
-NAGIOS_ETC=${NAGIOS}/etc
-NAGIOS_BIN=${NAGIOS}/bin
-NAGIOS_LIBEXEC=${NAGIOS}/libexec
 NAGIOS_SNMP_COMMUNITY=N4g1osS4m4n4
 NAGIOS_NETBIOS_DOMAIN=SAMANA
 NAGIOS_FQDN_DOMAIN=samana.local
 NAGIOS_WMI_USER=samanasvc
 NAGIOS_WMI_PASSWORD=C1tr1xAdm1n
 LOGPATH=/tmp/install_log
+IMAGE_URL="" # s3 url to samanamonitor.tgz image
+IMAGE=samanamon:v1
+SLACK_DOMAIN=samana.slack.com
+SLACK_TOKEN=0N97lXlClhtS79ue1bQtci2a
+SLACK_CHANNEL=#nagios-test
+NAGIOS_HOSTNAME=4c42b2c3a203.samanagroup.co
+NAGIOS_EMAIL=demo1@samanagroup.co
+NAGIOS_SMTP_SERVER=email-smtp.us-east-1.amazonaws.com:465
+NAGIOS_SMTP_USER=AKIAWMAXZDTTGMLIPUEW
+NAGIOS_SMTP_PASSWORD=BHqd+/CHf6VdyPP+b0I4mCv2v73/oOhk+CAxON6iYl2y
 

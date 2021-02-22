@@ -1,11 +1,6 @@
 #!/bin/bash
 
-IMAGE_URL="" # s3 url to samanamonitor.tgz image
-IMAGE=samanamon:v1
 NAGIOS_IP=$1
-SLACK_DOMAIN=samana.slack.com
-SLACK_TOKEN=0N97lXlClhtS79ue1bQtci2a
-SLACK_CHANNEL=#nagios-test
 
 if [ -z "$NAGIOS_IP" ]; then
     echo "Usage: $0 <ip address>"
@@ -14,6 +9,14 @@ fi
 
 apt install -y wget docker.io jq
 wget -O - ${IMAGE_URL} | docker load
+
+docker run -p 80:80 -p 443:443 -p 2379:2379 \
+    --mount source=nagios_etc,target=/usr/local/nagios/etc \
+    --mount source=nagios_libexec,target=/usr/local/nagios/libexec \
+    --mount source=pnp4nagios_perfdata,target=/usr/local/pnp4nagios/var/perfdata \
+    --mount source=ssmtp_etc,target=/etc/ssmtp \
+    --name sm -it -d $IMAGE /bin/bash -x /start.sh
+
 if [ ! -d /usr/local/nagios ]; then
     mkdir -p /usr/local/nagios
 fi
@@ -45,11 +48,16 @@ if [ -L /usr/local/pnp4nagios/perfdata ]; then
 fi
 ln -s $(docker inspect pnp4nagios_perfdata | jq -r .[0].Mountpoint) /usr/local/pnp4nagios/perfdata
 
-docker run -p 80:80 -p 443:443 -p 2379:2379 \
-    --mount source=nagios_etc,target=/usr/local/nagios/etc \
-    --mount source=nagios_libexec,target=/usr/local/nagios/libexec \
-    --mount source=pnp4nagios_perfdata,target=/usr/local/pnp4nagios/var/perfdata \
-    --name sm -it -d $IMAGE /bin/bash -x /start.sh
+if ! docker volume inspect ssmtp_etc 2&> /dev/null; then
+    docker volume create ssmtp_etc
+fi
+if [ ! -d /usr/local/ssmtp ]; then
+    mkdir -p /usr/local/ssmtp
+fi
+if [ -L /usr/local/ssmtp/etc ]; then
+    rm /usr/local/ssmtp/etc
+fi
+ln -s $(docker inspect ssmtp_etc | jq -r .[0].Mountpoint) /usr/local/ssmtp/etc
 
 sed -i -e "/USER12/d" -e "/USER13/d" /usr/local/nagios/etc/resource.cfg
 cat <<EOF >> /usr/local/nagios/etc/resource.cfg
@@ -85,3 +93,13 @@ domain=
 EOF
 chown nagios.nagios /etc/nagios/samananagios.pw
 chmod 660 /etc/nagios/samananagios.pw
+
+cat <<EOF > /usr/local/ssmtp/etc/ssmtp.conf
+hostname=${NAGIOS_HOSTNAME}
+root=${NAGIOS_EMAIL}
+mailhub=${NAGIOS_SMTP_SERVER}
+FromLineOverride=YES
+AuthUser=${NAGIOS_SMTP_USER}
+AuthPass=${NAGIOS_SMTP_PASSWORD}
+UseTLS=YES
+EOF

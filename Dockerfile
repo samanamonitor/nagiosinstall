@@ -7,5 +7,5 @@ RUN apt install -y git
 RUN mkdir /usr/src/samanamonitor
 RUN git clone https://github.com/samanamonitor/nagiosinstall.git /usr/src/samanamonitor/nagiosinstall
 WORKDIR /usr/src/samanamonitor/nagiosinstall/
-RUN cp config.dat.example config.dat
+RUN cp build_config.dat.example config.dat
 RUN ./install_openstack.sh installall

@@ -104,7 +104,7 @@ username=${NAGIOS_WMI_USER}@${NAGIOS_FQDN_DOMAIN}
 password=${NAGIOS_WMI_PASSWORD}
 domain=
 EOF
-chown nagios.nagios /etc/nagios/samananagios.pw
+chown 1000.1000 /etc/nagios/samananagios.pw
 chmod 660 /etc/nagios/samananagios.pw
 
 cat <<EOF > /usr/local/ssmtp/etc/ssmtp.conf

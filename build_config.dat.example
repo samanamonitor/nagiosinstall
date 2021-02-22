@@ -1,0 +1,5 @@
+WMIC_PATH=/usr/local/bin
+NAGIOS=/usr/local/nagios
+NAGIOS_ETC=${NAGIOS}/etc
+NAGIOS_BIN=${NAGIOS}/bin
+NAGIOS_LIBEXEC=${NAGIOS}/libexec

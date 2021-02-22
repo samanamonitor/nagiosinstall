@@ -60,19 +60,14 @@ use LWP::UserAgent;
 
 
 #
-# Customizable vars. Set these to the information for your team
-#
-
-my $opt_domain = "foo.slack.com"; # Your team's domain
-my $opt_token = ""; # The token from your Nagios services page
-
-
-#
 # Get command-line opts
 #
 
 my %opt_fields;
-GetOptions("field=s%" => \%opt_fields);
+my %opt_params;
+GetOptions("param=s%" => \%opt_params, "field=s%" => \%opt_fields);
+my $opt_domain = %opt_params{'DOMAIN'}; # Your team's domain
+my $opt_token = %opt_params{'TOKEN'}; # The token from your Nagios services page
 
 
 #

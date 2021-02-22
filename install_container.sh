@@ -19,7 +19,7 @@ if [ -z "$NAGIOS_IP" ]; then
 fi
 
 apt install -y wget docker.io jq
-if ! docker image inspect $IMAGE 2&> /dev/null; then
+if ! docker image inspect $IMAGE > /dev/null 2>&1; then
     wget -O - ${IMAGE_URL} | docker load
 fi
 
@@ -37,7 +37,7 @@ if [ ! -d /usr/local/pnp4nagios ]; then
     mkdir -p /usr/local/pnp4nagios
 fi
 
-if ! docker volume inspect nagios_etc 2&> /dev/null; then
+if ! docker volume inspect nagios_etc > /dev/null 2>&1; then
     docker volume create nagios_etc
 fi
 if [ -L /usr/local/nagios/etc ]; then
@@ -45,7 +45,7 @@ if [ -L /usr/local/nagios/etc ]; then
 fi
 ln -s $(docker inspect nagios_etc | jq -r .[0].Mountpoint) /usr/local/nagios/etc
 
-if ! docker volume inspect nagios_libexec 2&> /dev/null; then
+if ! docker volume inspect nagios_libexec > /dev/null 2>&1; then
     docker volume create nagios_libexec
 fi
 if [ -L /usr/local/nagios/libexec ]; then
@@ -53,7 +53,7 @@ if [ -L /usr/local/nagios/libexec ]; then
 fi
 ln -s $(docker inspect nagios_libexec | jq -r .[0].Mountpoint) /usr/local/nagios/libexec
 
-if ! docker volume inspect pnp4nagios_perfdata 2&> /dev/null; then
+if ! docker volume inspect pnp4nagios_perfdata > /dev/null 2>&1; then
     docker volume create pnp4nagios_perfdata
 fi
 if [ -L /usr/local/pnp4nagios/perfdata ]; then
@@ -61,7 +61,7 @@ if [ -L /usr/local/pnp4nagios/perfdata ]; then
 fi
 ln -s $(docker inspect pnp4nagios_perfdata | jq -r .[0].Mountpoint) /usr/local/pnp4nagios/perfdata
 
-if ! docker volume inspect ssmtp_etc 2&> /dev/null; then
+if ! docker volume inspect ssmtp_etc > /dev/null 2>&1; then
     docker volume create ssmtp_etc
 fi
 if [ ! -d /usr/local/ssmtp ]; then

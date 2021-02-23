@@ -96,7 +96,6 @@ cat <<EOF >> /usr/local/nagios/etc/resource.cfg
 \$USER13\$=-SamanaMonitorURI http://$NAGIOS_IP:2379
 \$USER14\$=$SLACK_DOMAIN
 \$USER15\$=$SLACK_TOKEN
-\$USER16\$=$SLACK_CHANNEL
 EOF
 
 cat <<EOF > /usr/local/nagios/etc/samananagios.pw
@@ -104,8 +103,8 @@ username=${NAGIOS_WMI_USER}@${NAGIOS_FQDN_DOMAIN}
 password=${NAGIOS_WMI_PASSWORD}
 domain=
 EOF
-chown 1000.1000 /etc/nagios/samananagios.pw
-chmod 660 /etc/nagios/samananagios.pw
+chown 1000.1000 /usr/local/nagios/etc/samananagios.pw
+chmod 660 /usr/local/nagios/etc/samananagios.pw
 
 cat <<EOF > /usr/local/ssmtp/etc/ssmtp.conf
 hostname=${NAGIOS_HOSTNAME}

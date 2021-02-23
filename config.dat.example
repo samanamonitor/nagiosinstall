@@ -3,7 +3,6 @@ NAGIOS_NETBIOS_DOMAIN=SAMANA
 NAGIOS_FQDN_DOMAIN=samana.local
 NAGIOS_WMI_USER=samanasvc
 NAGIOS_WMI_PASSWORD=C1tr1xAdm1n
-LOGPATH=/tmp/install_log
 IMAGE_URL="" # s3 url to samanamonitor.tgz image
 IMAGE=samanamon:v1
 SLACK_DOMAIN=samana.slack.com

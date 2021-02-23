@@ -3,3 +3,4 @@ NAGIOS=/usr/local/nagios
 NAGIOS_ETC=${NAGIOS}/etc
 NAGIOS_BIN=${NAGIOS}/bin
 NAGIOS_LIBEXEC=${NAGIOS}/libexec
+LOGPATH=/tmp/install_log

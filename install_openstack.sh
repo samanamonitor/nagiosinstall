@@ -97,7 +97,7 @@ install_wmi() {
 install_nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
-    LIBS="wget apache2 build-essential libgd-dev sendmail mailutils unzip libapache2-mod-php"
+    LIBS="wget apache2 build-essential libgd-dev ssmtp unzip libapache2-mod-php"
     DEBIAN_FRONTEND="noninteractive" apt install -y $LIBS
     (echo y; echo y; echo y) | sendmailconfig
     useradd -m nagios

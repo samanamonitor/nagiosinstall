@@ -250,21 +250,6 @@ install_nagios_base_config() {
     mkdir -p /etc/nagios/objects/environment
     cp -R etc/objects/samana/* /etc/nagios/objects/samana/
     cp -R etc/objects/environment/* /etc/nagios/objects/environment
-    cat <<EOF >> /etc/nagios/nagios.cfg
-cfg_dir=/etc/nagios/objects/samana
-cfg_dir=/etc/nagios/objects/environment
-process_performance_data=1
-service_perfdata_file=/usr/local/pnp4nagios/var/service-perfdata
-service_perfdata_file_template=DATATYPE::SERVICEPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tSERVICEDESC::\$SERVICEDESC\$\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\tSERVICESTATE::\$SERVICESTATE\$\tSERVICESTATETYPE::\$SERVICESTATETYPE\$
-service_perfdata_file_mode=a
-service_perfdata_file_processing_interval=15
-service_perfdata_file_processing_command=process-service-perfdata-file
-host_perfdata_file=/usr/local/pnp4nagios/var/host-perfdata
-host_perfdata_file_template=DATATYPE::HOSTPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tHOSTPERFDATA::\$HOSTPERFDATA\$\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$
-host_perfdata_file_mode=a
-host_perfdata_file_processing_interval=15
-host_perfdata_file_processing_command=process-host-perfdata-file
-EOF
     chown -R nagios.nagios /etc/nagios/objects/samana /etc/nagios/objects/environment
     chmod g+w /etc/nagios/objects/environment/* /etc/nagios/objects/samana/*
 }

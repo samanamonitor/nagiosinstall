@@ -115,3 +115,17 @@ AuthUser=${NAGIOS_SMTP_USER}
 AuthPass=${NAGIOS_SMTP_PASSWORD}
 UseTLS=YES
 EOF
+
+cat <<EOF >> /usr/local/nagios/etc/nagios.cfg
+process_performance_data=1
+service_perfdata_file=/usr/local/pnp4nagios/var/service-perfdata
+service_perfdata_file_template=DATATYPE::SERVICEPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tSERVICEDESC::\$SERVICEDESC\$\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\tSERVICESTATE::\$SERVICESTATE\$\tSERVICESTATETYPE::\$SERVICESTATETYPE\$
+service_perfdata_file_mode=a
+service_perfdata_file_processing_interval=15
+service_perfdata_file_processing_command=process-service-perfdata-file
+host_perfdata_file=/usr/local/pnp4nagios/var/host-perfdata
+host_perfdata_file_template=DATATYPE::HOSTPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tHOSTPERFDATA::\$HOSTPERFDATA\$\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$
+host_perfdata_file_mode=a
+host_perfdata_file_processing_interval=15
+host_perfdata_file_processing_command=process-host-perfdata-file
+EOF

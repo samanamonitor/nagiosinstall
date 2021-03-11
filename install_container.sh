@@ -18,7 +18,19 @@ if [ -z "$NAGIOS_IP" ]; then
     exit 1
 fi
 
-apt install -y wget docker.io jq
+if [ "$DIST" == "ubuntu" ]; then
+    apt install -y wget docker.io jq
+elif [ "$DIST" == "rhel" ]; then
+    yum install -y yum-utils
+    yum-config-manager \
+        --add-repo \
+        https://download.docker.com/linux/centos/docker-ce.repo
+        yum install -y docker-ce docker-ce-cli containerd.io jq wget --allowerasing
+else
+    echo "Invalid distribution. Use ubuntu or rhel"
+    exit 1
+fi
+
 if ! docker image inspect $IMAGE > /dev/null 2>&1; then
     wget -O - ${IMAGE_URL} | docker load
 fi

@@ -105,6 +105,7 @@ cat <<EOF >> /usr/local/nagios/etc/resource.cfg
 # Path with authentication credentials for scripts
 \$USER9\$=/etc/nagios/samananagios.pw
 
+\$USER11\$=http://$NAGIOS_IP/samanamonctx.ps1
 \$USER12\$=http://$NAGIOS_IP/samanamon.ps1
 \$USER13\$=-SamanaMonitorURI http://$NAGIOS_IP:2379
 \$USER14\$=$SLACK_DOMAIN

@@ -136,7 +136,7 @@ AuthPass=${NAGIOS_SMTP_PASSWORD}
 UseTLS=YES
 EOF
 
-if ! grep -q -E "^process_performance_data=1"; do
+if ! grep -q -E "^process_performance_data=1"; then
     cat <<EOF >> /usr/local/nagios/etc/nagios.cfg
 process_performance_data=1
 service_perfdata_file=/usr/local/pnp4nagios/var/service-perfdata

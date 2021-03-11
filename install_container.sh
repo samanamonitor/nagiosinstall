@@ -26,6 +26,7 @@ elif [ "$DIST" == "rhel" ]; then
         --add-repo \
         https://download.docker.com/linux/centos/docker-ce.repo
     yum install -y docker-ce docker-ce-cli containerd.io jq wget --allowerasing
+    systemctl start docker
 else
     echo "Invalid distribution. Use ubuntu or rhel"
     exit 1

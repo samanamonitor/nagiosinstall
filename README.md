@@ -7,4 +7,4 @@ Instructions:
 * sudo apt install -y git
 * git clone https://github.com/samanamonitor/nagiosinstall.git
 * cd nagiosinstall
-* sudo ./install_openstack.sh
+* sudo ./install_container.sh

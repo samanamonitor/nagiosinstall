@@ -36,13 +36,6 @@ if ! docker image inspect $IMAGE > /dev/null 2>&1; then
     wget -O - ${IMAGE_URL} | docker load
 fi
 
-docker run -p 80:80 -p 443:443 -p 2379:2379 \
-    --mount source=nagios_etc,target=/usr/local/nagios/etc \
-    --mount source=nagios_libexec,target=/usr/local/nagios/libexec \
-    --mount source=pnp4nagios_perfdata,target=/usr/local/pnp4nagios/var/perfdata \
-    --mount source=ssmtp_etc,target=/etc/ssmtp \
-    --name sm -it -d $IMAGE /bin/bash -x /start.sh
-
 if [ ! -d /usr/local/nagios ]; then
     mkdir -p /usr/local/nagios
 fi
@@ -83,7 +76,14 @@ fi
 if [ -L /usr/local/ssmtp/etc ]; then
     rm /usr/local/ssmtp/etc
 fi
-ln -s $(docker inspect ssmtp_etc | jq -r .[0].Mountpoint) /usr/local/ssmtp/etc
+ln -s $(docker volume inspect ssmtp_etc | jq -r .[0].Mountpoint) /usr/local/ssmtp/etc
+
+docker run -p 80:80 -p 443:443 -p 2379:2379 \
+    --mount source=nagios_etc,target=/usr/local/nagios/etc \
+    --mount source=nagios_libexec,target=/usr/local/nagios/libexec \
+    --mount source=pnp4nagios_perfdata,target=/usr/local/pnp4nagios/var/perfdata \
+    --mount source=ssmtp_etc,target=/etc/ssmtp \
+    --name sm -it -d $IMAGE /bin/bash -x /start.sh
 
 sed -i -e "/USER12/d" -e "/USER13/d" /usr/local/nagios/etc/resource.cfg
 cat <<EOF >> /usr/local/nagios/etc/resource.cfg

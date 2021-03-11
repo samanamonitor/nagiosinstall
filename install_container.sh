@@ -85,7 +85,13 @@ docker run -p 80:80 -p 443:443 -p 2379:2379 \
     --mount source=ssmtp_etc,target=/etc/ssmtp \
     --name sm -it -d $IMAGE /bin/bash -x /start.sh
 
-sed -i -e "/USER12/d" -e "/USER13/d" /usr/local/nagios/etc/resource.cfg
+sed -i -e "/USER12/d" \
+    -e "/USER13/d" \
+    -e "/USER11/d" \
+    -e "/USER9/d" \
+    -e "/USER14/d" \
+    -e "/USER15/d" \
+    /usr/local/nagios/etc/resource.cfg
 cat <<EOF >> /usr/local/nagios/etc/resource.cfg
 # Sets \$USER3\$ for SNMP community
 \$USER3\$=${NAGIOS_SNMP_COMMUNITY}
@@ -130,7 +136,8 @@ AuthPass=${NAGIOS_SMTP_PASSWORD}
 UseTLS=YES
 EOF
 
-cat <<EOF >> /usr/local/nagios/etc/nagios.cfg
+if ! grep -q -E "^process_performance_data=1"; do
+    cat <<EOF >> /usr/local/nagios/etc/nagios.cfg
 process_performance_data=1
 service_perfdata_file=/usr/local/pnp4nagios/var/service-perfdata
 service_perfdata_file_template=DATATYPE::SERVICEPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tSERVICEDESC::\$SERVICEDESC\$\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\tSERVICESTATE::\$SERVICESTATE\$\tSERVICESTATETYPE::\$SERVICESTATETYPE\$
@@ -143,3 +150,4 @@ host_perfdata_file_mode=a
 host_perfdata_file_processing_interval=15
 host_perfdata_file_processing_command=process-host-perfdata-file
 EOF
+fi

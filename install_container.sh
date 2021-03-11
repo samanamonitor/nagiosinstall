@@ -78,7 +78,7 @@ if [ -L /usr/local/ssmtp/etc ]; then
 fi
 ln -s $(docker volume inspect ssmtp_etc | jq -r .[0].Mountpoint) /usr/local/ssmtp/etc
 
-docker service create -p 80:80 -p 443:443 -p 2379:2379 \
+docker run -p 80:80 -p 443:443 -p 2379:2379 \
     --mount source=nagios_etc,target=/usr/local/nagios/etc \
     --mount source=nagios_libexec,target=/usr/local/nagios/libexec \
     --mount source=pnp4nagios_perfdata,target=/usr/local/pnp4nagios/var/perfdata \

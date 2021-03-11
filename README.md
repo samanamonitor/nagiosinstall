@@ -9,4 +9,4 @@ Instructions:
 * cd nagiosinstall
 * cp config.dat.example config.dat
 * *Modify config.dat file with necessary data*
-* sudo ./install_container.sh
+* sudo ./install_container.sh <ip address of the linux server>

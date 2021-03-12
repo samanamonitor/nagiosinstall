@@ -222,7 +222,7 @@ install_slack_nagios() {
     cpan HTTP::Request
     cpan LWP::UserAgent
     cpan LWP::Protocol::https
-    install -o nagios -g nagios $DIR/support/slack_nagios.pl ${NAGIOS_LIBEXEC}
+    install -o nagios -g nagios -m 0755 $DIR/support/slack_nagios.pl ${NAGIOS_LIBEXEC}
 }
 
 install_check_wmi_plus() {
@@ -234,50 +234,15 @@ install_check_wmi_plus() {
     cpan DateTime
 
     git clone https://github.com/samanamonitor/check_wmi_plus.git ${TEMPDIR}
-    install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus_help.pl ${NAGIOS_LIBEXEC}
-    install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus.pl ${NAGIOS_LIBEXEC}
-    install -o nagios -g nagios ${TEMPDIR}/check_wmi_plus.README.txt ${NAGIOS_LIBEXEC}
+    install -o nagios -g nagios -m 0755 ${TEMPDIR}/check_wmi_plus_help.pl ${NAGIOS_LIBEXEC}
+    install -o nagios -g nagios -m 0755 ${TEMPDIR}/check_wmi_plus.pl ${NAGIOS_LIBEXEC}
+    install -o nagios -g nagios -m 0755 ${TEMPDIR}/check_wmi_plus.README.txt ${NAGIOS_LIBEXEC}
     cp -R ${TEMPDIR}/etc/check_wmi_plus ${NAGIOS_ETC}
     chown -R nagios.nagios ${NAGIOS_ETC}/check_wmi_plus
     cp ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf.sample \
         ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf
     sed -i -e "s|^\$base_dir=.*|\$base_dir='${NAGIOS_LIBEXEC}';|" \
         ${NAGIOS_ETC}/check_wmi_plus/check_wmi_plus.conf
-    #sed -i "s|my \$conf_file=.*|my \$conf_file='/etc/nagios/check_wmi_plus/check_wmi_plus.conf';|" \
-    #    ${NAGIOS_LIBEXEC}/check_wmi_plus.pl
-    cd ${CURDIR}
-    rm -Rf ${TEMPDIR}
-}
-
-install_nagios_base_config() {
-    mkdir -p /etc/nagios/objects/samana
-    mkdir -p /etc/nagios/objects/environment
-    cp -R etc/objects/samana/* /etc/nagios/objects/samana/
-    cp -R etc/objects/environment/* /etc/nagios/objects/environment
-    chown -R nagios.nagios /etc/nagios/objects/samana /etc/nagios/objects/environment
-    chmod g+w /etc/nagios/objects/environment/* /etc/nagios/objects/samana/*
-}
-
-install_nagios_config() {
-    local TEMPDIR=$(mktemp -d)
-    local CURDIR=$(pwd)
-    git clone https://github.com/samanamonitor/nagios-config.git ${TEMPDIR}
-    cd ${TEMPDIR}
-    apt install -y libapache2-mod-wsgi
-    pip install flask
-    mkdir -p /var/www/nagios_config/nagios_config
-    mkdir -p /var/www/nagios_config/html
-    cp -R nagios_config/* /var/www/nagios_config/nagios_config/
-    cp -R html/* /var/www/nagios_config/html/
-    cp nagios_config.wsgi /var/www/nagios_config/
-    chown -R www-data.www-data /var/www/nagios_config
-    cp etc/apache2/sites-available/nagios-config.conf /etc/apache2/sites-available/
-    cd /etc/apache2/sites-enabled/
-    ln -s ../sites-available/nagios-config.conf
-    cp check_config.sh reload_config.sh /var/www/nagios_config
-    chown nagios.nagios /var/www/nagios_config/check_config.sh
-    chown root.root /var/www/nagios_config/reload_config.sh
-    chmod u+s /var/www/nagios_config/check_config.sh /var/www/nagios_config/reload_config.sh
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -309,8 +274,6 @@ fi
 case $1 in
 "installall")
     mkdir -p ${LOGPATH}
-    #resize_partition
-    #install_prereqs
     install_wmi
     install_pywinrm
     install_nagios
@@ -322,7 +285,6 @@ case $1 in
     install_check_mssql
     install_slack_nagios
     install_check_wmi_plus
-    #install_nagios_config
     docker_start
     install_cleanup
     ;;

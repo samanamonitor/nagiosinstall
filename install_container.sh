@@ -41,6 +41,7 @@ add-local-volume() {
     if [ -L $VOLPATH ]; then
         rm $VOLPATH
     fi
+    mkdir -p ${VOLPATH%/*}
     ln -s $(docker inspect $VOLNAME | jq -r .[0].Mountpoint) $VOLPATH
 
 }

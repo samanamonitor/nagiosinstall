@@ -47,7 +47,9 @@ add-local-volume() {
 }
 
 if ! docker image inspect $IMAGE > /dev/null 2>&1; then
-    wget -O - ${IMAGE_URL} | docker load
+    wget -O ${IMAGE_URL##*/} ${IMAGE_URL}
+    docker load -i ${IMAGE_URL##*/}
+    rm ${IMAGE_URL##*/}
 fi
 
 add-local-volume nagios_etc /usr/local/nagios/etc

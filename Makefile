@@ -7,12 +7,11 @@ build_image:
 	$(eval BUILD_IMAGE := $(shell docker images ${IMAGE_NAME} -q))
 ifeq ("$(BUILD_IMAGE)", "")
 	docker build -t ${IMAGE_NAME} . > $@
-	$(info Build image created)
 endif
 
 build_volume:
 	$(eval VOL_OPT := $(shell docker volume ls -f name=${VOLUME_NAME} -q))
-ifeq ($(VOL_OPT), "")
+ifeq ("$(VOL_OPT)", "")
 	docker volume create ${VOLUME_NAME} > $@
 endif
 	

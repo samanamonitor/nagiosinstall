@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -xe
 # run the following commands on windows for winRM to be enabled
 # winrm quickconfig -transport:https
 LIBS="git build-essential autoconf python"

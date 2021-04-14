@@ -1,14 +1,14 @@
 
-build_image:
+build_image.txt:
 	$(eval BUILD_IMAGE := $(shell docker images nagiosbuild -q))
 ifeq ($(BUILD_IMAGE), "")
-	docker build -t nagiosbuild . > build_image
+	docker build -t nagiosbuild . > build_image.txt
 endif
 
-build_volume:
+build_volume.txt:
 	$(eval VOL_OPT := $(shell docker volume ls -f name=nagios_opt -q))
 ifeq ($(VOL_OPT), "")
-	docker volume create nagios_opt > build_volume
+	docker volume create nagios_opt > build_volume.txt
 endif
 	
 wmi: build_volume build_image

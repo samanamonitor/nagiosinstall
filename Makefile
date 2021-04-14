@@ -2,7 +2,7 @@ IMAGE_NAME=nagiosbuild
 VOLUME_NAME=nagios_opt
 
 
-build_image:
+build_image: config.dat
 	$(info Checking if build image exists)
 	$(eval BUILD_IMAGE := $(shell docker images ${IMAGE_NAME} -q))
 ifeq ("$(BUILD_IMAGE)", "")
@@ -14,6 +14,9 @@ build_volume:
 ifeq ("$(VOL_OPT)", "")
 	docker volume create ${VOLUME_NAME} > $@
 endif
+
+config.dat:
+	cp config.dat.example config.dat
 	
 wmi: build_volume build_image
 	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} wmi

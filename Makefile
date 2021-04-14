@@ -1,5 +1,6 @@
 
 build_image:
+	$(info Checking if build image exists)
 	$(eval BUILD_IMAGE := $(shell docker images nagiosbuild -q))
 ifeq ($(BUILD_IMAGE), "")
 	docker build -t nagiosbuild . > $@

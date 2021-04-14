@@ -22,7 +22,7 @@ install_pywinrm() {
 }
 
 ###  Install wmi
-install_wmi() {
+build_wmi() {
     # run the following commands on windows for winRM to be enabled
     # winrm quickconfig -transport:https
     LIBS="git build-essential autoconf python"
@@ -40,7 +40,7 @@ install_wmi() {
 
 
 ##############donwload and install Nagios################
-install_nagios() {
+build_nagios() {
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
     LIBS="wget apache2 build-essential libgd-dev ssmtp unzip libapache2-mod-php"
@@ -220,7 +220,7 @@ fi
 case $1 in
 "installall")
     mkdir -p ${LOGPATH}
-    install_wmi
+    build_wmi
     install_pywinrm
     install_nagios
     install_nagios_plugins
@@ -235,7 +235,16 @@ case $1 in
     install_cleanup
     ;;
 "wmi")
-    install_wmi
+    build_wmi
+    ;;
+"pywinrm")
+    install_pywinrm
+    ;;
+"nagios")
+    install_nagios
+    ;;
+"nagios-plugins")
+    install_nagios_plugins
     ;;
 *)
     ;;

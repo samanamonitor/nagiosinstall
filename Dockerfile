@@ -1,11 +1,5 @@
-FROM ubuntu:bionic AS samanamon
-EXPOSE 80
-EXPOSE 443
-EXPOSE 2379
-RUN apt update
-RUN apt install -y git
+FROM ubuntu:bionic AS nagiosbuild
 RUN mkdir /usr/src/samanamonitor
-RUN git clone https://github.com/samanamonitor/nagiosinstall.git /usr/src/samanamonitor/nagiosinstall
-WORKDIR /usr/src/samanamonitor/nagiosinstall/
-RUN cp build_config.dat.example config.dat
-RUN ./build_container.sh installall
+WORKDIR /usr/src/samanamonitor
+COPY build_container.sh /usr/src/samanamonitor
+ENTRYPOINT [ "./build_container.sh" ]

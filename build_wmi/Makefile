@@ -1,5 +1,5 @@
 all:
-	$(eval VOL_OPT := $(docker volume ls -f name=nagios_opt -q))
+	$(eval VOL_OPT := $(shell docker volume ls -f name=nagios_opt -q))
 	ifeq $(VOL_OPT) ""
 		docker volume create nagios_opt
 	endif

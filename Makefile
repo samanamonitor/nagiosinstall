@@ -3,7 +3,7 @@ build_image:
 	$(info Checking if build image exists)
 	$(eval BUILD_IMAGE := $(shell docker images nagiosbuild -q))
 	$(info build_image=${BUILD_IMAGE})
-ifeq ($(BUILD_IMAGE), "")
+ifeq ("$(BUILD_IMAGE)", "")
 	docker build -t nagiosbuild . > $@
 endif
 

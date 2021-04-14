@@ -2,4 +2,4 @@ FROM ubuntu:bionic AS wmi
 RUN mkdir /usr/src/samanamonitor
 WORKDIR /usr/src/samanamonitor
 COPY build_container.sh /usr/src/samanamonitor
-RUN ./build_container.sh wmi
+RUN ./build.sh

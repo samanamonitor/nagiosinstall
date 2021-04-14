@@ -20,9 +20,7 @@ wmi: build_volume build_image
 	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} wmi
 
 clean:
-	if [ -f build_image ]; then
-		docker image rm ${IMAGE_NAME}
-		rm build_image
-	fi
-	docker volume rm ${VOLUME_NAME}
-	rm build_volume
+	-docker image rm ${IMAGE_NAME}
+	rm -f build_image
+	-docker volume rm ${VOLUME_NAME}
+	rm -f build_volume

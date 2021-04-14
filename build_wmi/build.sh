@@ -11,6 +11,6 @@ apt install -y $LIBS
 git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
 cd ${TEMPDIR}
 ulimit -n 100000 && make "CPP=gcc -E -ffreestanding"
-install ${TEMPDIR}/Samba/source/bin/wmic ${WMIC_PATH}/
+install ${TEMPDIR}/Samba/source/bin/wmic /opt/wmic
 cd ${CURDIR}
 rm -Rf ${TEMPDIR}

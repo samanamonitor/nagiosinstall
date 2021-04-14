@@ -2,9 +2,9 @@
 build_image:
 	$(info Checking if build image exists)
 	$(eval BUILD_IMAGE := $(shell docker images nagiosbuild -q))
-	$(info build_image=${BUILD_IMAGE})
 ifeq ("$(BUILD_IMAGE)", "")
 	docker build -t nagiosbuild . > $@
+	$(info Build image created)
 endif
 
 build_volume:
@@ -16,3 +16,8 @@ endif
 wmi: build_volume build_image
 	docker run --rm --mount source=nagios_opt,target=/opt nagiosbuild wmi
 
+clean:
+	docker image rm build_image
+	rm build_image
+	docker volume rm nagios_opt
+	rm build_volume

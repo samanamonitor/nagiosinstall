@@ -17,7 +17,7 @@ wmi: build_volume build_image
 	docker run --rm --mount source=nagios_opt,target=/opt nagiosbuild wmi
 
 clean:
-	docker image rm build_image
+	docker image rm nagiosbuild
 	rm build_image
 	docker volume rm nagios_opt
 	rm build_volume

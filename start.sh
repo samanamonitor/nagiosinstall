@@ -7,6 +7,9 @@ if [ $status -ne 0 ]; then
   exit $status
 fi
 
+rm /run/apache2/apache2.pid
+rm /run/etcd.pid
+
 APACHE_RUN_USER=www-data APACHE_RUN_GROUP=www-data APACHE_LOG_DIR=/var/log/apache2 /usr/sbin/apachectl -DFOREGROUND &
 status=$?
 if [ $status -ne 0 ]; then

@@ -15,61 +15,6 @@ fi
 
 . $DIR/config.dat
 
-##############Install prerequisites packages##############
-install_prereqs() {
-    INSTALL_PKGS="apache2 \
-        php \
-        php-cgi \
-        libapache2-mod-php \
-        php-pear \
-        php-mbstring \
-        gcc \
-        glibc-source \
-        php-gd \
-        libgd-dev \
-        snmp \
-        unzip \
-        telnet \
-        smbclient \
-        rrdtool \
-        librrdtool-oo-perl \
-        cpanminus \
-        python-winrm \
-        sendmail \
-        autoconf \
-        mailutils \
-        python-pip \
-        bc \
-        git \
-        php-sybase \
-        curl \
-        apt-transport-https \
-        libwww-perl \
-        libcrypt-ssleay-perl \
-        liblwp-protocol-https-perl \
-        autoconf \
-        make \
-        libdatetime-perl \
-        build-essential \
-        g++ \
-        python-dev \
-        libssl-dev \
-        python-openssl \
-        libffi-dev"
-
-    mkdir -p ${LOGPATH}
-    apt-get update
-    apt-get install -y $INSTALL_PKGS
-    (echo y; echo y; echo y) | sendmailconfig
-    pip install --upgrade pyOpenSSL
-    #python -m easy_install --upgrade pyOpenSSL
-
-
-    #curl -s https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
-    #bash -c "curl -s https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list"
-    #apt-get update
-}
-
 install_pywinrm() {
     apt install -y python-pip
     pip install requests_ntlm
@@ -83,6 +28,7 @@ install_wmi() {
     LIBS="git build-essential autoconf python"
     local TEMPDIR=$(mktemp -d)
     local CURDIR=$(pwd)
+    apt update
     apt install -y $LIBS
     git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
     cd ${TEMPDIR}
@@ -287,6 +233,9 @@ case $1 in
     install_check_wmi_plus
     docker_start
     install_cleanup
+    ;;
+"wmi")
+    install_wmi
     ;;
 *)
     ;;

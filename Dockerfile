@@ -8,4 +8,4 @@ RUN mkdir /usr/src/samanamonitor
 RUN git clone https://github.com/samanamonitor/nagiosinstall.git /usr/src/samanamonitor/nagiosinstall
 WORKDIR /usr/src/samanamonitor/nagiosinstall/
 RUN cp build_config.dat.example config.dat
-RUN ./install_openstack.sh installall
+RUN ./build_container.sh installall

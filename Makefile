@@ -31,3 +31,4 @@ clean:
 	-docker volume rm ${VOLUME_NAME}
 	rm -f build_volume
 	rm -f $(COMPONENTS)
+	rm -f config.dat

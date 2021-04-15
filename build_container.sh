@@ -53,6 +53,7 @@ build_nagios() {
     #make install-init
     make install-config
     make install-commandmode
+    install -d -o root -g root /opt/build/apache2/sites-available/
     make install-webconf
     cp -R contrib/eventhandlers/ ${BUILD_DIR}/nagios/libexec/
 }
@@ -75,6 +76,7 @@ build_nagios_plugins() {
     ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd --prefix=${BUILD_DIR}/nagios
     make
     make install
+    install -d -o root -g root /opt/build/apache2/sites-available/
 }
 
 ##############Configure pnp4nagios#####################

@@ -1,5 +1,6 @@
 IMAGE_NAME=nagiosbuild
 VOLUME_NAME=nagios_opt
+INSTALL_DIR=/usr/src/install
 
 COMPONENTS=build_wmi build_nagios build_nagios_plugins build_pnp4nagios build_check_wmi_plus build_nagiosinstall
 
@@ -23,7 +24,7 @@ config.dat:
 	cp config.dat.example config.dat
 	
 $(COMPONENTS): build_volume build_image
-	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} $@ > $@ 2>&1
+	docker run --rm --mount source=${VOLUME_NAME},target=/opt -v `pwd`:$(INSTALL_DIR) -w $(INSTALL_DIR) ${IMAGE_NAME} $@ > $@ 2>&1
 
 clean:
 	-docker image rm ${IMAGE_NAME}

@@ -2,6 +2,7 @@ IMAGE_NAME=nagiosbuild
 VOLUME_NAME=nagios_opt
 
 
+
 build_image: config.dat
 	$(info Checking if build image exists)
 	$(eval BUILD_IMAGE := $(shell docker images ${IMAGE_NAME} -q))
@@ -18,8 +19,8 @@ endif
 config.dat:
 	cp config.dat.example config.dat
 	
-wmi nagios nagios-plugins: build_volume build_image
-	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} $@
+wmi nagios nagios_plugins: build_volume build_image
+	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} build_$@ > $@.log
 
 clean:
 	-docker image rm ${IMAGE_NAME}

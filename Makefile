@@ -23,10 +23,11 @@ config.dat:
 	cp config.dat.example config.dat
 	
 $(COMPONENTS): build_volume build_image
-	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} build_$@ > $@.log 2>&1
+	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} build_$@ > $@ 2>&1
 
 clean:
 	-docker image rm ${IMAGE_NAME}
 	rm -f build_image
 	-docker volume rm ${VOLUME_NAME}
 	rm -f build_volume
+	rm -f $(COMPONENTS)

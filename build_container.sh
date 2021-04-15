@@ -26,7 +26,8 @@ build_wmi() {
     git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
     cd ${TEMPDIR}
     ulimit -n 100000 && make "CPP=gcc -E -ffreestanding"
-    install -D ${TEMPDIR}/Samba/source/bin/wmic ${BUILD_DIR}/wmi/
+    install -d ${BUILD_DIR}/wmi/
+    install -o root -g root -m 0755 ${TEMPDIR}/Samba/source/bin/wmic ${BUILD_DIR}/wmi/
 }
 
 ##############donwload and install Nagios################

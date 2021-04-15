@@ -15,4 +15,4 @@ IMAGE=samanamon:v1
 SLACK_DOMAIN=samana.slack.com
 SLACK_TOKEN=0N97lXlClhtS79ue1bQtci2a
 DIST=ubuntu
-BUILD_DIR=/opt/build/
+BUILD_DIR=/opt/build

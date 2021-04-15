@@ -1,6 +1,9 @@
 IMAGE_NAME=nagiosbuild
 VOLUME_NAME=nagios_opt
 
+COMPONENTS=wmi nagios nagios_plugins pnp4nagios check_wmi_plus nagiosinstall
+
+install: $(COMPONENTS)
 
 
 build_image: config.dat
@@ -19,8 +22,8 @@ endif
 config.dat:
 	cp config.dat.example config.dat
 	
-wmi nagios nagios_plugins: build_volume build_image
-	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} build_$@ > $@.log
+$(COMPONENTS): build_volume build_image
+	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} build_$@ > $@.log 2>&1
 
 clean:
 	-docker image rm ${IMAGE_NAME}

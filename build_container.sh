@@ -35,7 +35,8 @@ build_nagios() {
     local TEMPDIR=$(mktemp -d)
     LIBS="wget apache2 build-essential libgd-dev unzip libapache2-mod-php"
     DEBIAN_FRONTEND="noninteractive" apt install -y $LIBS
-    groupadd -g ${NAGIOS_GID} nagcmd
+    groupadd -g ${NAGIOS_GID} nagios
+    groupadd -g ${NAGCMD_GID} nagcmd
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
@@ -62,7 +63,8 @@ build_nagios_plugins() {
     LIBS="libldap2-dev libkrb5-dev libssl-dev iputils-ping smbclient snmp \
         libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libnet-snmp-perl" # removed libfreeradius-client-dev for bionic
     apt install -y $LIBS
-    groupadd -g ${NAGIOS_GID} nagcmd
+    groupadd -g ${NAGIOS_GID} nagios
+    groupadd -g ${NAGCMD_GID} nagcmd
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
@@ -80,7 +82,8 @@ build_pnp4nagios() {
     local TEMPDIR=$(mktemp -d)
     LIBS="rrdtool librrdtool-oo-perl php-xml"
     apt install -y $LIBS
-    groupadd -g ${NAGIOS_GID} nagcmd
+    groupadd -g ${NAGIOS_GID} nagios
+    groupadd -g ${NAGCMD_GID} nagcmd
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
@@ -100,7 +103,8 @@ build_pnp4nagios() {
 
 build_check_wmi_plus() {
     local TEMPDIR=$(mktemp -d)
-    groupadd -g ${NAGIOS_GID} nagcmd
+    groupadd -g ${NAGIOS_GID} nagios
+    groupadd -g ${NAGCMD_GID} nagcmd
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
@@ -116,7 +120,8 @@ build_check_wmi_plus() {
 build_nagiosinstall() {
     local TEMPDIR=$(mktemp -d)
     git clone https://github.com/samanamonitor/nagiosinstall.git ${TEMPDIR}
-    groupadd -g ${NAGIOS_GID} nagcmd
+    groupadd -g ${NAGIOS_GID} nagios
+    groupadd -g ${NAGCMD_GID} nagcmd
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
@@ -149,7 +154,8 @@ install_nagios() {
     fi
 
     apt install -y apache2 libgd3 ssmtp libapache2-mod-php unzip libapache2-mod-wsgi
-    groupadd -g ${NAGIOS_GID} nagcmd
+    groupadd -g ${NAGIOS_GID} nagios
+    groupadd -g ${NAGCMD_GID} nagcmd
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data

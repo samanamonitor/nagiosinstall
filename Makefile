@@ -18,8 +18,8 @@ endif
 config.dat:
 	cp config.dat.example config.dat
 	
-wmi: build_volume build_image
-	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} wmi
+wmi nagios nagios-plugins: build_volume build_image
+	docker run --rm --mount source=${VOLUME_NAME},target=/opt ${IMAGE_NAME} $@
 
 clean:
 	-docker image rm ${IMAGE_NAME}

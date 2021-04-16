@@ -36,3 +36,4 @@ clean:
 	rm -f build_volume
 	rm -f $(COMPONENTS)
 	rm -f config.dat
+	rm -f apps.tar

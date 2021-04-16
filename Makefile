@@ -4,7 +4,10 @@ INSTALL_DIR=/usr/src/install
 
 COMPONENTS=build_wmi build_nagios build_nagios_plugins build_pnp4nagios build_check_wmi_plus build_nagiosinstall
 
-install: $(COMPONENTS)
+install: apps.tar
+
+apps.tar: $(COMPONENTS)
+	docker run --rm --mount source=${VOLUME_NAME},target=/opt -v `pwd`:$(INSTALL_DIR) -w $(INSTALL_DIR) ${IMAGE_NAME} build_tarball > $@.log 2>&1
 
 
 build_image: config.dat

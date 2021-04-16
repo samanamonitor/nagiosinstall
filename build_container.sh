@@ -306,6 +306,9 @@ case $1 in
 "build_nagiosinstall")
     build_nagiosinstall
     ;;
+"build_tarball")
+    build_tarball
+    ;;
 *)
     ;;
 esac

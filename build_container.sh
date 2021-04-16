@@ -120,19 +120,20 @@ build_check_wmi_plus() {
 }
 
 build_nagiosinstall() {
-    local TEMPDIR=$(mktemp -d)
-    git clone https://github.com/samanamonitor/nagiosinstall.git ${TEMPDIR}
     groupadd -g ${NAGIOS_GID} nagios
     groupadd -g ${NAGCMD_GID} nagcmd
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
-    install -o nagios -g nagcmd $TEMPDIR/support/check_mssql ${BUILD_DIR}/nagios/libexec
+    install -o nagios -g nagcmd support/check_mssql ${BUILD_DIR}/nagios/libexec
     install -d -o root -g root ${BUILD_DIR}/snmp
     install -d -o root -g root ${BUILD_DIR}/snmp/mibs
-    install -o root -g root ${TEMPDIR}/support/mibs/* ${BUILD_DIR}/snmp/mibs
-    install -o nagios -g nagcmd -m 0755 $TEMPDIR/support/slack_nagios.pl ${BUILD_DIR}/nagios/libexec
+    install -o root -g root support/mibs/* ${BUILD_DIR}/snmp/mibs
+    install -o nagios -g nagcmd -m 0755 support/slack_nagios.pl ${BUILD_DIR}/nagios/libexec
+}
 
+build_tarball() {
+    tar -cvf apps.tar /opt/build/*
 }
 
 install_pywinrm() {
@@ -235,6 +236,15 @@ install_check_wmi_plus() {
         /usr/local/nagios/etc/check_wmi_plus/check_wmi_plus.conf
     sed -i -e "s|^\$base_dir=.*|\$base_dir='/usr/local/nagios/libexec';|" \
         /usr/local/nagios/etc/check_wmi_plus/check_wmi_plus.conf
+}
+
+install_nagiosinstall() {
+    install -o nagios -g nagcmd support/check_mssql /usr/local/nagios/libexec
+    install -d -o root -g root ${BUILD_DIR}/snmp
+    install -d -o root -g root ${BUILD_DIR}/snmp/mibs
+    install -o root -g root support/mibs/* ${BUILD_DIR}/snmp/mibs
+    install -o nagios -g nagcmd -m 0755 support/slack_nagios.pl ${BUILD_DIR}/nagios/libexec
+
 }
 
 install_start() {

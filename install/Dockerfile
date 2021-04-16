@@ -1,7 +1,8 @@
 FROM ubuntu:bionic AS samanamon
 COPY apps.tar /opt
 COPY start.sh /
+COPY ../build_container.sh /usr/src
 WORKDIR /
 RUN tar -xvf /opt/apps.tar; \
-    rm /opt/apps.tar
+    rm /opt/apps.tar;
 ENTRYPOINT [ "./start.sh" ]

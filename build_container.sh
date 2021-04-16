@@ -182,7 +182,7 @@ install_nagios_plugins() {
 install_pnp4nagios() {
     LIBS="rrdtool librrdtool-oo-perl php-xml"
     apt install -y $LIBS
-    mv {BUILD_DIR}/pnp4nagios /usr/local
+    mv ${BUILD_DIR}/pnp4nagios /usr/local
     mv ${BUILD_DIR}/apache2/sites-available/pnp4nagios.conf /etc/apache2/sites-available
     a2ensite pnp4nagios
 }
@@ -238,15 +238,6 @@ install_check_wmi_plus() {
         /usr/local/nagios/etc/check_wmi_plus/check_wmi_plus.conf
     sed -i -e "s|^\$base_dir=.*|\$base_dir='/usr/local/nagios/libexec';|" \
         /usr/local/nagios/etc/check_wmi_plus/check_wmi_plus.conf
-}
-
-install_nagiosinstall() {
-    install -o nagios -g nagcmd support/check_mssql /usr/local/nagios/libexec
-    install -d -o root -g root ${BUILD_DIR}/snmp
-    install -d -o root -g root ${BUILD_DIR}/snmp/mibs
-    install -o root -g root support/mibs/* ${BUILD_DIR}/snmp/mibs
-    install -o nagios -g nagcmd -m 0755 support/slack_nagios.pl ${BUILD_DIR}/nagios/libexec
-
 }
 
 install_start() {

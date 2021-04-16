@@ -3,5 +3,6 @@ ENV TZ=America/New_York
 COPY apps.tar start.sh build_container.sh config.dat /opt/
 WORKDIR /
 RUN tar -xvf /opt/apps.tar; \
-    rm /opt/apps.tar;
+    rm /opt/apps.tar; \
+    /opt/build_container.sh installall
 ENTRYPOINT [ "./start.sh" ]

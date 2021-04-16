@@ -273,7 +273,6 @@ fi
 
 case $1 in
 "installall")
-    mkdir -p ${LOGPATH}
     install_pywinrm
     install_wmi
     install_nagios

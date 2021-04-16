@@ -1,5 +1,6 @@
 FROM ubuntu:bionic AS samanamon
 ENV TZ=America/New_York
+ENV DEBIAN_FRONTEND="noninteractive" 
 COPY apps.tar start.sh build_container.sh config.dat /opt/
 WORKDIR /
 RUN tar -xvf /opt/apps.tar; \

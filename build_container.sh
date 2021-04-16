@@ -137,7 +137,9 @@ build_tarball() {
 }
 
 install_pywinrm() {
+    apt update
     apt install -y python-pip
+    # TODO: requesting tz info. Need to fix
     pip install requests_ntlm
     pip install pywinrm
 }
@@ -164,7 +166,7 @@ install_nagios() {
     usermod -a -G nagios,nagcmd www-data
     mv ${BUILD_DIR}/nagios /usr/local
     mv ${BUILD_DIR}/apache2/sites-available/nagios.conf /etc/apache2/sites-available
-    a2enconf nagios
+    a2ensite nagios
     a2enmod rewrite
     a2enmod cgi
     htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin Samana81.
@@ -180,13 +182,13 @@ install_nagios_plugins() {
 install_pnp4nagios() {
     LIBS="rrdtool librrdtool-oo-perl php-xml"
     apt install -y $LIBS
-    mv /opt/usr/local/pnp4nagios /usr/local
+    mv {BUILD_DIR}/pnp4nagios /usr/local
     mv ${BUILD_DIR}/apache2/sites-available/pnp4nagios.conf /etc/apache2/sites-available
-    a2enmod pnp4nagios
+    a2ensite pnp4nagios
 }
 
 install_check_samana() {
-    LIBS="etcd python-etcd ansible"
+    LIBS="git etcd python-etcd ansible"
     apt install -y $LIBS
     git clone https://github.com/samanamonitor/check_samana.git /usr/src/nagiosinstall/check_samana
     make -C /usr/src/nagiosinstall/check_samana

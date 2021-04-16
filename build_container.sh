@@ -234,10 +234,10 @@ install_slack_nagios() {
 install_check_wmi_plus() {
     LIBS="libnumber-format-perl libconfig-inifiles-perl libdatetime-perl"
     apt install -y $LIBS
-    cp /usr/local/nagios/etc/check_wmi_plus/check_wmi_plus.conf.sample \
-        /usr/local/nagios/etc/check_wmi_plus/check_wmi_plus.conf
+    cp /usr/local/nagios/etc/check_wmi_plus.conf.sample \
+        /usr/local/nagios/etc/check_wmi_plus.conf
     sed -i -e "s|^\$base_dir=.*|\$base_dir='/usr/local/nagios/libexec';|" \
-        /usr/local/nagios/etc/check_wmi_plus/check_wmi_plus.conf
+        /usr/local/nagios/etc/check_wmi_plus.conf
 }
 
 install_start() {

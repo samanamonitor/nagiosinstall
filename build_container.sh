@@ -188,7 +188,7 @@ install_pnp4nagios() {
 }
 
 install_check_samana() {
-    LIBS="git etcd python-etcd ansible"
+    LIBS="git ansible"
     apt install -y $LIBS
     git clone https://github.com/samanamonitor/check_samana.git /usr/src/nagiosinstall/check_samana
     make -C /usr/src/nagiosinstall/check_samana

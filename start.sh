@@ -24,12 +24,6 @@ if [ $status -ne 0 ]; then
   exit $status
 fi
 
-ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379 \
-    ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379 \
-    ETCD_DATA_DIR="/var/lib/etcd/default" \
-    ETCD_MAX_SNAPSHOTS=1 \
-    ETCD_MAX_WALS=1 \
-    /usr/bin/etcd &
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start ETCD: $status"

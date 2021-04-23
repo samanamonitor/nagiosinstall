@@ -3,6 +3,7 @@
 set -xe
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+REGISTRY=gcr.io/etcd-development/etcd
 
 if [ ! -f $DIR/config.dat ]; then
     echo "Configuration file not found. Use config.dat.example as a base"
@@ -57,14 +58,27 @@ add-local-volume nagios_libexec /usr/local/nagios/libexec
 add-local-volume nagios_var /usr/local/nagios/var
 add-local-volume pnp4nagios_perfdata /usr/local/pnp4nagios/var/perfdata
 add-local-volume ssmtp_etc /usr/local/ssmtp/etc
+add-local-volume apache_etc /usr/local/apache2/etc
+add-local-volume apache_log /usr/local/apache2/log
+add-local-volume etcd_data /usr/local/etcd/var
 
-docker run -p 80:80 -p 443:443 -p 2379:2379 \
+docker run -p 80:80 -p 443:443 \
     --mount source=nagios_etc,target=/usr/local/nagios/etc \
     --mount source=nagios_libexec,target=/usr/local/nagios/libexec \
     --mount source=nagios_var,target=/usr/local/nagios/var \
     --mount source=pnp4nagios_perfdata,target=/usr/local/pnp4nagios/var/perfdata \
     --mount source=ssmtp_etc,target=/etc/ssmtp \
+    --mount source=apache_etc,target=/etc/apache2 \
+    --mount source=apache_log,target=/var/log/apache2 \
     --name sm -it -d $IMAGE /bin/bash -x /start.sh
+
+docker run -d -p 2379:2379 \
+  --volume=etcd_data:/etcd-data \
+  --name etcd ${REGISTRY}:latest \
+  /usr/local/bin/etcd \
+  --data-dir=/etcd-data --name node1 \
+  --advertise-client-urls http://${NAGIOS_IP}:2379 --listen-client-urls http://0.0.0.0:2379 \
+  --auto-compaction-retention 1 --enable-v2
 
 sed -i -e "/USER12/d" \
     -e "/USER13/d" \
@@ -94,7 +108,7 @@ cat <<EOF >> /usr/local/nagios/etc/resource.cfg
 
 \$USER11\$=http://$NAGIOS_IP/samanamonctx.ps1
 \$USER12\$=http://$NAGIOS_IP/samanamon.ps1
-\$USER13\$=-SamanaMonitorURI http://$NAGIOS_IP:2379
+\$USER13\$=http://$NAGIOS_IP:2379
 \$USER14\$=$SLACK_DOMAIN
 \$USER15\$=$SLACK_TOKEN
 EOF

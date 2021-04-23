@@ -143,6 +143,7 @@ install_prereqs() {
         rrdtool librrdtool-oo-perl php-xml git ansible php-sybase \
         libhttp-request-ascgi-perl libnumber-format-perl \
         libconfig-inifiles-perl libdatetime-perl"
+    apt update
     apt install -y $LIBS
 
     groupadd -g ${NAGIOS_GID} nagios

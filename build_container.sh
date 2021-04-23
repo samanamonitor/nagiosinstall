@@ -136,6 +136,22 @@ build_tarball() {
     tar -cvf apps.tar /opt/build/*
 }
 
+install_prereqs() {
+    LIBS="apache2 libgd3 ssmtp libapache2-mod-php unzip libapache2-mod-wsgi\
+        libldap-2.4-2 libkrb5-3 libssl1.1 iputils-ping smbclient snmp \
+        libdbi1 libmysqlclient20 libpq5 dnsutils fping libnet-snmp-perl \
+        rrdtool librrdtool-oo-perl php-xml git ansible php-sybase \
+        libhttp-request-ascgi-perl libnumber-format-perl \
+        libconfig-inifiles-perl libdatetime-perl"
+    apt install -y $LIBS
+
+    groupadd -g ${NAGIOS_GID} nagios
+    groupadd -g ${NAGCMD_GID} nagcmd
+    useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
+    usermod -a -G nagcmd nagios
+    usermod -a -G nagios,nagcmd www-data
+}
+
 install_pywinrm() {
     apt update
     apt install -y python-pip
@@ -157,13 +173,6 @@ install_nagios() {
         echo "Build directory missing from /opt/build/nagios"
         exit 1
     fi
-
-    apt install -y apache2 libgd3 ssmtp libapache2-mod-php unzip libapache2-mod-wsgi
-    groupadd -g ${NAGIOS_GID} nagios
-    groupadd -g ${NAGCMD_GID} nagcmd
-    useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
-    usermod -a -G nagcmd nagios
-    usermod -a -G nagios,nagcmd www-data
     mv ${BUILD_DIR}/nagios /usr/local
     mv ${BUILD_DIR}/apache2/sites-available/nagios.conf /etc/apache2/sites-available
     a2ensite nagios
@@ -173,23 +182,13 @@ install_nagios() {
     ln -s /usr/local/nagios/etc /etc/nagios
 }
 
-install_nagios_plugins() {
-    LIBS="libldap-2.4-2 libkrb5-3 libssl1.1 iputils-ping smbclient snmp \
-        libdbi1 libmysqlclient20 libpq5 dnsutils fping libnet-snmp-perl" # removed libfreeradius-client-dev for bionic
-    apt install -y $LIBS
-}
-
 install_pnp4nagios() {
-    LIBS="rrdtool librrdtool-oo-perl php-xml"
-    apt install -y $LIBS
     mv ${BUILD_DIR}/pnp4nagios /usr/local
     mv ${BUILD_DIR}/apache2/sites-available/pnp4nagios.conf /etc/apache2/sites-available
     a2ensite pnp4nagios
 }
 
 install_check_samana() {
-    LIBS="git ansible"
-    apt install -y $LIBS
     git clone https://github.com/samanamonitor/check_samana.git /usr/src/nagiosinstall/check_samana
     make -C /usr/src/nagiosinstall/check_samana
     make -C /usr/src/nagiosinstall/check_samana install
@@ -220,20 +219,14 @@ install_pynag() {
 }
 
 install_check_mssql() {
-    local LIBS="php-sybase"
-    apt install -y $LIBS
     sed -i '/^;\s\+tds\s\+version/a tds version = 8.0' \
         /etc/freetds/freetds.conf
 }
 
 install_slack_nagios() {
-    LIBS="libhttp-request-ascgi-perl"
-    apt install -y $LIBS
 }
 
 install_check_wmi_plus() {
-    LIBS="libnumber-format-perl libconfig-inifiles-perl libdatetime-perl"
-    apt install -y $LIBS
     cp /usr/local/nagios/etc/check_wmi_plus.conf.sample \
         /usr/local/nagios/etc/check_wmi_plus.conf
     sed -i -e "s|^\$base_dir=.*|\$base_dir='/usr/local/nagios/libexec';|" \
@@ -266,6 +259,7 @@ fi
 
 case $1 in
 "installall")
+    install_prereqs
     install_pywinrm
     install_wmi
     install_nagios

@@ -142,7 +142,7 @@ install_prereqs() {
         libdbi1 libmysqlclient20 libpq5 dnsutils fping libnet-snmp-perl \
         rrdtool librrdtool-oo-perl php-xml git ansible php-sybase \
         libhttp-request-ascgi-perl libnumber-format-perl \
-        libconfig-inifiles-perl libdatetime-perl"
+        libconfig-inifiles-perl libdatetime-perl python-pip"
     apt update
     apt install -y $LIBS
 
@@ -154,8 +154,6 @@ install_prereqs() {
 }
 
 install_pywinrm() {
-    apt update
-    apt install -y python-pip
     # TODO: requesting tz info. Need to fix
     pip install requests_ntlm
     pip install pywinrm
@@ -199,7 +197,7 @@ install_check_samana() {
     #    '{"eventminutes":10,"eventmax":11,"eventlevelmax":3,"eventlist":["System","Application"]}'
     #etcdctl set /samanamonitor/config/storefront-example \
     #    '{"eventminutes":10,"eventmax":11,"eventlevelmax":3,"eventlist":["System","Application", "Citrix Delivery Services"]}'
-    /etc/init.d/etcd stop
+    #/etc/init.d/etcd stop
 }
 
 install_mibs() {

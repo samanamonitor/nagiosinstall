@@ -137,7 +137,7 @@ build_tarball() {
 }
 
 install_prereqs() {
-    LIBS="apache2 libgd3 ssmtp libapache2-mod-php unzip libapache2-mod-wsgi\
+    LIBS="apache2 libgd3 ssmtp libapache2-mod-php unzip libapache2-mod-wsgi \
         libldap-2.4-2 libkrb5-3 libssl1.1 iputils-ping smbclient snmp \
         libdbi1 libmysqlclient20 libpq5 dnsutils fping libnet-snmp-perl \
         rrdtool librrdtool-oo-perl php-xml git ansible php-sybase \
@@ -192,7 +192,6 @@ install_check_samana() {
     git clone https://github.com/samanamonitor/check_samana.git /usr/src/nagiosinstall/check_samana
     make -C /usr/src/nagiosinstall/check_samana
     make -C /usr/src/nagiosinstall/check_samana install
-    /etc/init.d/etcd start
     #etcdctl setdir /samanamonitor/data
     #etcdctl setdir /samanamonitor/config
     #etcdctl set /samanamonitor/config/global \
@@ -221,9 +220,6 @@ install_pynag() {
 install_check_mssql() {
     sed -i '/^;\s\+tds\s\+version/a tds version = 8.0' \
         /etc/freetds/freetds.conf
-}
-
-install_slack_nagios() {
 }
 
 install_check_wmi_plus() {
@@ -263,13 +259,11 @@ case $1 in
     install_pywinrm
     install_wmi
     install_nagios
-    install_nagios_plugins
     install_pnp4nagios
     install_check_samana
     install_mibs
     install_pynag
     install_check_mssql
-    install_slack_nagios
     install_check_wmi_plus
     install_start
     install_cleanup

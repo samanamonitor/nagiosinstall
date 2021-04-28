@@ -72,13 +72,16 @@ docker run -p 80:80 -p 443:443 \
     --mount source=apache_log,target=/var/log/apache2 \
     --name sm -it -d $IMAGE /bin/bash -x /start.sh
 
+
 docker run -d -p 2379:2379 \
-  --volume=etcd_data:/etcd-data \
-  --name etcd ${REGISTRY}:latest \
-  /usr/local/bin/etcd \
-  --data-dir=/etcd-data --name node1 \
-  --advertise-client-urls http://${NAGIOS_IP}:2379 --listen-client-urls http://0.0.0.0:2379 \
-  --auto-compaction-retention 1 --enable-v2
+    --volume etcd_data:/etcd-data \
+    --name etcd ${REGISTRY}:latest \
+    /usr/local/bin/etcd --data-dir /etcd-data --name node0 \
+    --advertise-client-urls http://${NAGIOS_IP}:2379 \
+    --listen-client-urls http://0.0.0.0:2379 --max-snapshots 2 \
+    --max-wals 5 --enable-v2 -auto-compaction-retention 1 \
+    --snapshot-count 5000
+
 
 sed -i -e "/USER12/d" \
     -e "/USER13/d" \
@@ -111,6 +114,10 @@ cat <<EOF >> /usr/local/nagios/etc/resource.cfg
 \$USER13\$=http://$NAGIOS_IP:2379
 \$USER14\$=$SLACK_DOMAIN
 \$USER15\$=$SLACK_TOKEN
+\$USER30\$=# replace with Citrix Cloud customer_id
+\$USER31\$=# replace with Citrix Cloud API client_id
+\$USER32\$=# replace with Citrix Cloud API client_secret
+\$USER33\$=# replace with ETCD server IP
 EOF
 
 cat <<EOF > /usr/local/nagios/etc/samananagios.pw

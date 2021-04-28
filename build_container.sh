@@ -142,7 +142,8 @@ install_prereqs() {
         libdbi1 libmysqlclient20 libpq5 dnsutils fping libnet-snmp-perl \
         rrdtool librrdtool-oo-perl php-xml git ansible php-sybase \
         libhttp-request-ascgi-perl libnumber-format-perl \
-        libconfig-inifiles-perl libdatetime-perl python-pip"
+        libconfig-inifiles-perl libdatetime-perl python-pip \
+        python3 python3-urllib3"
     apt update
     apt install -y $LIBS
 

@@ -133,7 +133,7 @@ build_nagiosinstall() {
 }
 
 build_tarball() {
-    tar -cvf apps.tar /opt/build/*
+    tar -cvf apps.tar ${BUILD_DIR}/*
 }
 
 install_prereqs() {

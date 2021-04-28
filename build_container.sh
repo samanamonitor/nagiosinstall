@@ -7,7 +7,7 @@
 set -xe
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-BUILD_DIR=/opt/build/
+BUILD_DIR=/usr/local/
 
 if [ ! -f $DIR/config.dat ]; then
     echo "Configuration file not found. Use config.dat.example as a base"

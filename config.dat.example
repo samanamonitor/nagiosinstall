@@ -1,5 +1,8 @@
 # Install Variables
 
+# Do not change this variable
+CONFIG_TYPE=install
+
 # Delete this variable when installing
 EXAMPLE=1
 

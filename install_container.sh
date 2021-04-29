@@ -16,6 +16,11 @@ if [ "$EXAMPLE" == "1" ]; then
     exit 1
 fi
 
+if [ "$CONFIG_TYPE" != "install" ]; then
+    echo "Invalid config file. Use config.dat.example as a template."
+    exit 1
+fi
+
 NAGIOS_IP=$1
 
 if [ -z "$NAGIOS_IP" ]; then

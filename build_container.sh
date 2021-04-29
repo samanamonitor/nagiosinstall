@@ -15,6 +15,11 @@ fi
 
 . $DIR/config.dat
 
+if [ "$CONFIG_TYPE" != "build" ]; then
+    echo "Invalid config file. Use build_config.dat.example as a template."
+    exit 1
+fi
+
 build_wmi() {
     # run the following commands on windows for winRM to be enabled
     # winrm quickconfig -transport:https

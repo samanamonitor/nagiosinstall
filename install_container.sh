@@ -61,8 +61,11 @@ add-local-volume() {
 
 }
 
-if ! docker image inspect $IMAGE > /dev/null 2>&1; then
-    wget -O ${IMAGE_URL##*/} ${IMAGE_URL}
+IMAGE_ID=$(docker image ls ${IMAGE} -q)
+if [ "$IMAGE_ID" == "" ]; then
+    if [ ! -f ${IMAGE_URL##*/} ]; then
+        wget -O ${IMAGE_URL##*/} ${IMAGE_URL}
+    fi
     docker load -i ${IMAGE_URL##*/}
     rm ${IMAGE_URL##*/}
 fi

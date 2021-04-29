@@ -32,7 +32,7 @@ config.dat:
 	cp build_config.dat.example config.dat
 	
 $(COMPONENTS): build_volume build_image
-	docker run --rm --mount source=${VOLUME_NAME},target=/opt -v `pwd`:$(INSTALL_DIR) -w $(INSTALL_DIR) ${IMAGE_NAME} $@ > $@ 2>&1
+	docker run --rm --mount source=${VOLUME_NAME},target=/usr/local -v `pwd`:$(INSTALL_DIR) -w $(INSTALL_DIR) ${IMAGE_NAME} $@ > $@ 2>&1
 
 clean:
 	-docker image rm ${IMAGE_NAME}

@@ -75,7 +75,7 @@ build_nagios_plugins() {
     ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd --prefix=${BUILD_DIR}/nagios
     make
     make install
-    install -d -o root -g root /opt/build/apache2/sites-available/
+    install -d -o root -g root ${BUILD_DIR}/apache2/sites-available/
 }
 
 ##############Configure pnp4nagios#####################
@@ -161,15 +161,15 @@ install_pywinrm() {
 
 install_wmi() {
     if [ ! -d ${BUILD_DIR}/wmi ]; then
-        echo "Build directory missing from /opt/build/wmi"
+        echo "Build directory missing from ${BUILD_DIR}/wmi"
         exit 1
     fi
     install ${BUILD_DIR}/wmi/wmic /usr/local/bin
 }
 
 install_nagios() {
-    if [ ! -d /opt/build/nagios ]; then
-        echo "Build directory missing from /opt/build/nagios"
+    if [ ! -d ${BUILD_DIR}/nagios ]; then
+        echo "Build directory missing from ${BUILD_DIR}/nagios"
         exit 1
     fi
     mv ${BUILD_DIR}/nagios /usr/local

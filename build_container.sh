@@ -52,7 +52,7 @@ build_nagios() {
     #make install-init
     make install-config
     make install-commandmode
-    install -d -o root -g root /opt/build/apache2/sites-available/
+    install -d -o root -g root ${BUILD_DIR}/apache2/sites-available/
     make install-webconf
     cp -R contrib/eventhandlers/ ${BUILD_DIR}/nagios/libexec/
 }

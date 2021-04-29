@@ -172,17 +172,15 @@ install_nagios() {
         echo "Build directory missing from ${BUILD_DIR}/nagios"
         exit 1
     fi
-    mv ${BUILD_DIR}/nagios /usr/local
     mv ${BUILD_DIR}/apache2/sites-available/nagios.conf /etc/apache2/sites-available
     a2ensite nagios
     a2enmod rewrite
     a2enmod cgi
-    htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin Samana81.
-    ln -s /usr/local/nagios/etc /etc/nagios
+    htpasswd -b -c ${BUILD_DIR}/nagios/etc/htpasswd.users nagiosadmin Samana81.
+    ln -s ${BUILD_DIR}/nagios/etc /etc/nagios
 }
 
 install_pnp4nagios() {
-    mv ${BUILD_DIR}/pnp4nagios /usr/local
     mv ${BUILD_DIR}/apache2/sites-available/pnp4nagios.conf /etc/apache2/sites-available
     a2ensite pnp4nagios
 }
@@ -191,13 +189,6 @@ install_check_samana() {
     git clone https://github.com/samanamonitor/check_samana.git /usr/src/nagiosinstall/check_samana
     make -C /usr/src/nagiosinstall/check_samana
     make -C /usr/src/nagiosinstall/check_samana install
-    #etcdctl setdir /samanamonitor/data
-    #etcdctl setdir /samanamonitor/config
-    #etcdctl set /samanamonitor/config/global \
-    #    '{"eventminutes":10,"eventmax":11,"eventlevelmax":3,"eventlist":["System","Application"]}'
-    #etcdctl set /samanamonitor/config/storefront-example \
-    #    '{"eventminutes":10,"eventmax":11,"eventlevelmax":3,"eventlist":["System","Application", "Citrix Delivery Services"]}'
-    #/etc/init.d/etcd stop
 }
 
 install_mibs() {

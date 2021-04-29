@@ -33,18 +33,20 @@ if [ -z "$NAGIOS_IP" ]; then
     exit 1
 fi
 
-if [ "$DIST" == "ubuntu" ]; then
-    apt install -y wget docker.io jq
-elif [ "$DIST" == "rhel" ]; then
-    yum install -y yum-utils
-    yum-config-manager \
-        --add-repo \
-        https://download.docker.com/linux/centos/docker-ce.repo
-    yum install -y docker-ce docker-ce-cli containerd.io jq wget --allowerasing
+if ! which docker; then
+    if [ "$DIST" == "ubuntu" ]; then
+        apt install -y wget docker.io jq
+    elif [ "$DIST" == "rhel" ]; then
+        yum install -y yum-utils
+        yum-config-manager \
+            --add-repo \
+            https://download.docker.com/linux/centos/docker-ce.repo
+        yum install -y docker-ce docker-ce-cli containerd.io jq wget --allowerasing
+    else
+        echo "Invalid distribution. Use ubuntu or rhel"
+        exit 1
+    fi        
     systemctl start docker
-else
-    echo "Invalid distribution. Use ubuntu or rhel"
-    exit 1
 fi
 
 add-local-volume() {
@@ -79,26 +81,30 @@ add-local-volume apache_etc /usr/local/apache2/etc
 add-local-volume apache_log /usr/local/apache2/log
 add-local-volume etcd_data /usr/local/etcd/var
 
-docker run -p 80:80 -p 443:443 \
-    --mount source=nagios_etc,target=/usr/local/nagios/etc \
-    --mount source=nagios_libexec,target=/usr/local/nagios/libexec \
-    --mount source=nagios_var,target=/usr/local/nagios/var \
-    --mount source=pnp4nagios_perfdata,target=/usr/local/pnp4nagios/var/perfdata \
-    --mount source=ssmtp_etc,target=/etc/ssmtp \
-    --mount source=apache_etc,target=/etc/apache2 \
-    --mount source=apache_log,target=/var/log/apache2 \
-    --name sm -it -d $IMAGE /bin/bash -x /start.sh
+SM_ID=$(docker ps -f name=sm -q)
+if [ "$SM_ID" == "" ]; then
+    docker run -p 80:80 -p 443:443 \
+        --mount source=nagios_etc,target=/usr/local/nagios/etc \
+        --mount source=nagios_libexec,target=/usr/local/nagios/libexec \
+        --mount source=nagios_var,target=/usr/local/nagios/var \
+        --mount source=pnp4nagios_perfdata,target=/usr/local/pnp4nagios/var/perfdata \
+        --mount source=ssmtp_etc,target=/etc/ssmtp \
+        --mount source=apache_etc,target=/etc/apache2 \
+        --mount source=apache_log,target=/var/log/apache2 \
+        --name sm -it -d $IMAGE /bin/bash -x /start.sh
+fi
 
-
-docker run -d -p 2379:2379 \
-    --volume etcd_data:/etcd-data \
-    --name etcd ${REGISTRY}:latest \
-    /usr/local/bin/etcd --data-dir /etcd-data --name node0 \
-    --advertise-client-urls http://${NAGIOS_IP}:2379 \
-    --listen-client-urls http://0.0.0.0:2379 --max-snapshots 2 \
-    --max-wals 5 --enable-v2 -auto-compaction-retention 1 \
-    --snapshot-count 5000
-
+ETCD_ID=$(docker ps -f name=etcd -q)
+if [ "$ETCD_ID" == "" ]; then
+    docker run -d -p 2379:2379 \
+        --volume etcd_data:/etcd-data \
+        --name etcd ${REGISTRY}:latest \
+        /usr/local/bin/etcd --data-dir /etcd-data --name node0 \
+        --advertise-client-urls http://${NAGIOS_IP}:2379 \
+        --listen-client-urls http://0.0.0.0:2379 --max-snapshots 2 \
+        --max-wals 5 --enable-v2 -auto-compaction-retention 1 \
+        --snapshot-count 5000
+fi
 
 sed -i -e "/USER12/d" \
     -e "/USER13/d" \

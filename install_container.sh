@@ -21,6 +21,11 @@ if [ "$CONFIG_TYPE" != "install" ]; then
     exit 1
 fi
 
+if [ "${IMAGE}" == "" ]; then
+    echo "Set IMAGE variable in config.dat file"
+    exit 1
+fi
+
 NAGIOS_IP=$1
 
 if [ -z "$NAGIOS_IP" ]; then

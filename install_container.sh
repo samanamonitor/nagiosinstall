@@ -91,7 +91,7 @@ if [ "$SM_ID" == "" ]; then
         --mount source=ssmtp_etc,target=/etc/ssmtp \
         --mount source=apache_etc,target=/etc/apache2 \
         --mount source=apache_log,target=/var/log/apache2 \
-        --name sm -it -d $IMAGE /bin/bash -x /start.sh
+        --name sm -it -d $IMAGE
 fi
 
 ETCD_ID=$(docker ps -f name=etcd -q)

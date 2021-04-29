@@ -5,7 +5,7 @@ INSTALL_DIR=/usr/src/install
 COMPONENTS=build_wmi build_nagios build_nagios_plugins build_pnp4nagios build_check_wmi_plus build_nagiosinstall
 
 publish: nagiosinstall.tar.gz
-	aws s3 cp $@ s3://monitor.samanagroup.co --acl public-read
+	aws s3 cp $< s3://monitor.samanagroup.co --acl public-read
 
 nagiosinstall.tar.gz: apps.tar
 	docker build -t samanamon:v1 -f Dockerfile.install .

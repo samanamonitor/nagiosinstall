@@ -103,18 +103,6 @@ build_pnp4nagios() {
 }
 
 build_check_wmi_plus() {
-    local TEMPDIR=$(mktemp -d)
-    groupadd -g ${NAGIOS_GID} nagios
-    groupadd -g ${NAGCMD_GID} nagcmd
-    useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
-    usermod -a -G nagcmd nagios
-    usermod -a -G nagios,nagcmd www-data
-    git clone https://github.com/samanamonitor/check_wmi_plus.git ${TEMPDIR}
-    install -o nagios -g nagcmd -m 0755 ${TEMPDIR}/check_wmi_plus_help.pl ${BUILD_DIR}/nagios/libexec
-    install -o nagios -g nagcmd -m 0755 ${TEMPDIR}/check_wmi_plus.pl ${BUILD_DIR}/nagios/libexec
-    install -o nagios -g nagcmd -m 0755 ${TEMPDIR}/check_wmi_plus.README.txt ${BUILD_DIR}/nagios/libexec
-    install -d -o nagios -g nagcmd ${BUILD_DIR}/nagios/etc/check_wmi_plus
-    cp -R ${TEMPDIR}/etc/check_wmi_plus/* ${BUILD_DIR}/nagios/etc
 
 }
 
@@ -213,10 +201,18 @@ install_check_mssql() {
 }
 
 install_check_wmi_plus() {
+    local TEMPDIR=$(mktemp -d)
+    git clone https://github.com/samanamonitor/check_wmi_plus.git ${TEMPDIR}
+    install -o nagios -g nagcmd -m 0755 ${TEMPDIR}/check_wmi_plus_help.pl ${BUILD_DIR}/nagios/libexec
+    install -o nagios -g nagcmd -m 0755 ${TEMPDIR}/check_wmi_plus.pl ${BUILD_DIR}/nagios/libexec
+    install -o nagios -g nagcmd -m 0755 ${TEMPDIR}/check_wmi_plus.README.txt ${BUILD_DIR}/nagios/libexec
+    install -d -o nagios -g nagcmd ${BUILD_DIR}/nagios/etc/check_wmi_plus
+    cp -R ${TEMPDIR}/etc/check_wmi_plus/* ${BUILD_DIR}/nagios/etc
     cp /usr/local/nagios/etc/check_wmi_plus.conf.sample \
         /usr/local/nagios/etc/check_wmi_plus.conf
     sed -i -e "s|^\$base_dir=.*|\$base_dir='/usr/local/nagios/libexec';|" \
         /usr/local/nagios/etc/check_wmi_plus.conf
+    rm -Rf ${TEMPDIR}
 }
 
 install_start() {

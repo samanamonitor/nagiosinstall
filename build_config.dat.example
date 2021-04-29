@@ -1,8 +1,9 @@
-WMIC_PATH=/usr/local/bin
-NAGIOS=/usr/local/nagios
-NAGIOS_ETC=${NAGIOS}/etc
-NAGIOS_BIN=${NAGIOS}/bin
-NAGIOS_LIBEXEC=${NAGIOS}/libexec
-LOGPATH=/tmp/install_log
+# Build Variables
+# Nagios UID and GID necessary for impelemntation (don't change unless you know what you are doing)
 NAGIOS_UID=5001
 NAGIOS_GID=5001
+NAGCMD_GID=5002
+# 
+IMAGE=samanamon:v1
+DIST=ubuntu
+BUILD_DIR=/usr/local

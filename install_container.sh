@@ -3,14 +3,18 @@
 set -xe
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-REGISTRY=gcr.io/etcd-development/etcd
 
 if [ ! -f $DIR/config.dat ]; then
     echo "Configuration file not found. Use config.dat.example as a base"
     exit 1
 fi
 
-. $DIR/config.dat
+source $DIR/config.dat
+
+if [ "$EXAMPLE" == "1" ]; then
+    echo "Configuration file is an example, please modify the config file with the variables for the environment."
+    exit 1
+fi
 
 NAGIOS_IP=$1
 

@@ -29,7 +29,7 @@ ifeq ("$(VOL_USRL)", "")
 endif
 
 config.dat:
-	cp config.dat.example config.dat
+	cp build_config.dat.example config.dat
 	
 $(COMPONENTS): build_volume build_image
 	docker run --rm --mount source=${VOLUME_NAME},target=/opt -v `pwd`:$(INSTALL_DIR) -w $(INSTALL_DIR) ${IMAGE_NAME} $@ > $@ 2>&1

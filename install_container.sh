@@ -72,6 +72,18 @@ if [ "$IMAGE_ID" == "" ]; then
     rm ${IMAGE_URL##*/}
 fi
 
+if ! getent group nagios > /dev/null; then
+    groupadd -g ${NAGIOS_GID} nagios
+fi
+
+if ! getent group nagcmd > /dev/null; then
+    groupadd -g ${NAGCMD_GID} nagcmd
+fi
+
+if ! id nagios > /dev/null 2>&1; then
+    useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
+fi
+
 add-local-volume nagios_etc /usr/local/nagios/etc
 add-local-volume nagios_libexec /usr/local/nagios/libexec
 add-local-volume nagios_var /usr/local/nagios/var
@@ -80,6 +92,8 @@ add-local-volume ssmtp_etc /usr/local/ssmtp/etc
 add-local-volume apache_etc /usr/local/apache2/etc
 add-local-volume apache_log /usr/local/apache2/log
 add-local-volume etcd_data /usr/local/etcd/var
+
+chmod o+x /var/lib/docker/volumes
 
 SM_ID=$(docker ps -f name=sm -q)
 if [ "$SM_ID" == "" ]; then
@@ -112,6 +126,10 @@ sed -i -e "/USER12/d" \
     -e "/USER9/d" \
     -e "/USER14/d" \
     -e "/USER15/d" \
+    -e "/USER30/d" \
+    -e "/USER31/d" \
+    -e "/USER32/d" \
+    -e "/USER33/d" \
     /usr/local/nagios/etc/resource.cfg
 cat <<EOF >> /usr/local/nagios/etc/resource.cfg
 # Sets \$USER3\$ for SNMP community
@@ -148,7 +166,7 @@ username=${NAGIOS_WMI_USER}@${NAGIOS_FQDN_DOMAIN}
 password=${NAGIOS_WMI_PASSWORD}
 domain=
 EOF
-chown 1000.1000 /usr/local/nagios/etc/samananagios.pw
+chown ${NAGIOS_UID}.${NAGIOS_GID} /usr/local/nagios/etc/samananagios.pw
 chmod 660 /usr/local/nagios/etc/samananagios.pw
 
 cat <<EOF > /usr/local/ssmtp/etc/ssmtp.conf

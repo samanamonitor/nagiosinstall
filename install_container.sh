@@ -179,6 +179,7 @@ AuthPass=${NAGIOS_SMTP_PASSWORD}
 UseTLS=YES
 EOF
 
+set +e
 grep -q -E "^process_performance_data=1" /usr/local/nagios/etc/nagios.cfg
 if [  "$?" != "0" ]; then
     cat <<EOF >> /usr/local/nagios/etc/nagios.cfg
@@ -195,3 +196,4 @@ host_perfdata_file_processing_interval=15
 host_perfdata_file_processing_command=process-host-perfdata-file
 EOF
 fi
+set -e

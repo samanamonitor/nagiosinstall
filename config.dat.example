@@ -6,7 +6,10 @@ CONFIG_TYPE=install
 # Delete this variable when installing
 EXAMPLE=1
 
+# Set distribution type where the container is going to be installed (ubuntu or redhat)
+DIST=ubuntu
 IMAGE_URL="" # s3 url to samanamonitor.tgz image
+
 # Set SNMP community for monitoring components
 NAGIOS_SNMP_COMMUNITY=
 # Set NETBIOS and FQDN Domain name

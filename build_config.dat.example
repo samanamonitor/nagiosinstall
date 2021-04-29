@@ -8,5 +8,4 @@ NAGIOS_GID=5001
 NAGCMD_GID=5002
 # 
 IMAGE=samanamon:v1
-DIST=ubuntu
 BUILD_DIR=/usr/local

@@ -8,7 +8,10 @@ EXAMPLE=1
 
 # Set distribution type where the container is going to be installed (ubuntu or rhel)
 DIST=ubuntu
+
+# Set image URL to download tarball and image name
 IMAGE_URL="" # s3 url to samanamonitor.tgz image
+IMAGE=samanamon:v1
 
 # Set SNMP community for monitoring components
 NAGIOS_SNMP_COMMUNITY=

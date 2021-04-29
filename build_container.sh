@@ -102,10 +102,6 @@ build_pnp4nagios() {
     patch ${BUILD_DIR}/pnp4nagios/share/application/models/data.php $DIR/pnp4nagios.patch
 }
 
-build_check_wmi_plus() {
-
-}
-
 build_nagiosinstall() {
     groupadd -g ${NAGIOS_GID} nagios
     groupadd -g ${NAGCMD_GID} nagcmd

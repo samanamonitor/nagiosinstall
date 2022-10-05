@@ -55,7 +55,7 @@ add-local-volume() {
     if ! docker volume inspect $VOLNAME > /dev/null 2>&1; then
         docker volume create $VOLNAME
     else
-        return
+        return 0
     fi
     if [ -L $VOLPATH ]; then
         rm $VOLPATH

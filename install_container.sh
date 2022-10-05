@@ -54,6 +54,8 @@ add-local-volume() {
     VOLPATH=$2
     if ! docker volume inspect $VOLNAME > /dev/null 2>&1; then
         docker volume create $VOLNAME
+    else
+        return
     fi
     if [ -L $VOLPATH ]; then
         rm $VOLPATH
@@ -122,18 +124,19 @@ if [ "$ETCD_ID" == "" ]; then
         --snapshot-count 5000
 fi
 
-sed -i -e "/USER12/d" \
-    -e "/USER13/d" \
-    -e "/USER11/d" \
-    -e "/USER9/d" \
-    -e "/USER14/d" \
-    -e "/USER15/d" \
-    -e "/USER30/d" \
-    -e "/USER31/d" \
-    -e "/USER32/d" \
-    -e "/USER33/d" \
-    /usr/local/nagios/etc/resource.cfg
-cat <<EOF >> /usr/local/nagios/etc/resource.cfg
+if [ -f /usr/local/nagios/etc/new ]; then
+    sed -i -e "/USER12/d" \
+        -e "/USER13/d" \
+        -e "/USER11/d" \
+        -e "/USER9/d" \
+        -e "/USER14/d" \
+        -e "/USER15/d" \
+        -e "/USER30/d" \
+        -e "/USER31/d" \
+        -e "/USER32/d" \
+        -e "/USER33/d" \
+        /usr/local/nagios/etc/resource.cfg
+    cat <<EOF >> /usr/local/nagios/etc/resource.cfg
 # Sets \$USER3\$ for SNMP community
 \$USER3\$=${NAGIOS_SNMP_COMMUNITY}
 
@@ -163,15 +166,15 @@ cat <<EOF >> /usr/local/nagios/etc/resource.cfg
 \$USER33\$=# replace with ETCD server IP
 EOF
 
-cat <<EOF > /usr/local/nagios/etc/samananagios.pw
+    cat <<EOF > /usr/local/nagios/etc/samananagios.pw
 username=${NAGIOS_WMI_USER}@${NAGIOS_FQDN_DOMAIN}
 password=${NAGIOS_WMI_PASSWORD}
 domain=
 EOF
-chown ${NAGIOS_UID}.${NAGIOS_GID} /usr/local/nagios/etc/samananagios.pw
-chmod 660 /usr/local/nagios/etc/samananagios.pw
+    chown ${NAGIOS_UID}.${NAGIOS_GID} /usr/local/nagios/etc/samananagios.pw
+    chmod 660 /usr/local/nagios/etc/samananagios.pw
 
-cat <<EOF > /usr/local/ssmtp/etc/ssmtp.conf
+    cat <<EOF > /usr/local/ssmtp/etc/ssmtp.conf
 hostname=${NAGIOS_HOSTNAME}
 root=${NAGIOS_EMAIL}
 mailhub=${NAGIOS_SMTP_SERVER}
@@ -181,10 +184,10 @@ AuthPass=${NAGIOS_SMTP_PASSWORD}
 UseTLS=YES
 EOF
 
-set +e
-grep -q -E "^process_performance_data=1" /usr/local/nagios/etc/nagios.cfg
-if [  "$?" != "0" ]; then
-    cat <<EOF >> /usr/local/nagios/etc/nagios.cfg
+    set +e
+    grep -q -E "^process_performance_data=1" /usr/local/nagios/etc/nagios.cfg
+    if [  "$?" != "0" ]; then
+        cat <<EOF >> /usr/local/nagios/etc/nagios.cfg
 process_performance_data=1
 service_perfdata_file=/usr/local/pnp4nagios/var/service-perfdata
 service_perfdata_file_template=DATATYPE::SERVICEPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tSERVICEDESC::\$SERVICEDESC\$\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\tSERVICESTATE::\$SERVICESTATE\$\tSERVICESTATETYPE::\$SERVICESTATETYPE\$
@@ -197,5 +200,6 @@ host_perfdata_file_mode=a
 host_perfdata_file_processing_interval=15
 host_perfdata_file_processing_command=process-host-perfdata-file
 EOF
+    fi
+    set -e
 fi
-set -e

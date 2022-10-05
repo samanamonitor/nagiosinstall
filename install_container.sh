@@ -91,6 +91,7 @@ add-local-volume pnp4nagios_perfdata /usr/local/pnp4nagios/var/perfdata
 add-local-volume ssmtp_etc /usr/local/ssmtp/etc
 add-local-volume apache_etc /usr/local/apache2/etc
 add-local-volume apache_log /usr/local/apache2/log
+add-local-volume apache_html /usr/local/apache2/html
 add-local-volume etcd_data /usr/local/etcd/var
 
 chmod o+x /var/lib/docker/volumes
@@ -105,6 +106,7 @@ if [ "$SM_ID" == "" ]; then
         --mount source=ssmtp_etc,target=/etc/ssmtp \
         --mount source=apache_etc,target=/etc/apache2 \
         --mount source=apache_log,target=/var/log/apache2 \
+        --mount source=apache_html,target=/var/www/html \
         --name sm -it -d $IMAGE
 fi
 

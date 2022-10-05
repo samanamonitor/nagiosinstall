@@ -203,3 +203,7 @@ EOF
     fi
     set -e
 fi
+git clone https://github.com/samanamonitor/check_samana.git
+apt install -y make
+make -C check_samana
+make -C check_samana install

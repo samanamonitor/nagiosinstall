@@ -197,9 +197,12 @@ install_pnp4nagios() {
 }
 
 install_check_samana() {
-    git clone https://github.com/samanamonitor/check_samana.git /usr/src/nagiosinstall/check_samana
-    make -C /usr/src/nagiosinstall/check_samana
-    make -C /usr/src/nagiosinstall/check_samana install
+    local TEMPDIR
+    TEMPDIR=$(mktemp)
+    git clone https://github.com/samanamonitor/check_samana.git ${TEMPDIR}
+    make -C ${TEMPDIR}
+    make -C ${TEMPDIR} install
+    rm -Rf ${TEMPDIR}
 }
 
 install_mibs() {

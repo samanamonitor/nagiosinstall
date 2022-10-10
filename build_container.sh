@@ -137,11 +137,8 @@ build_nagiosinstall() {
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
-    install -d -o nagios -g nagcmd ${BUILD_DIR}/nagios/libexec
-    install -o nagios -g nagcmd support/check_mssql ${BUILD_DIR}/nagios/libexec
     install -d -o root -g root ${BUILD_DIR}/snmp/mibs
     install -o root -g root support/mibs/* ${BUILD_DIR}/snmp/mibs
-    install -o nagios -g nagcmd -m 0755 support/slack_nagios.pl ${BUILD_DIR}/nagios/libexec
 }
 
 build_tarball() {

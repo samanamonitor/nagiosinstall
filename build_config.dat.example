@@ -7,7 +7,7 @@ NAGIOS_UID=5001
 NAGIOS_GID=5001
 NAGCMD_GID=5002
 # 
-IMAGE=samanamon:v2.0
+IMAGE=%IMAGE_NAME%
 BUILD_DIR=/usr/local
 #
 NAGIOS_URL=https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.8.tar.gz

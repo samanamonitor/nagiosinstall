@@ -12,3 +12,4 @@ BUILD_DIR=/usr/local
 #
 NAGIOS_URL=https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.8.tar.gz
 NAGIOS_PLUGINS_URL=http://nagios-plugins.org/download/nagios-plugins-2.3.3.tar.gz
+PNP4NAGIOS_URL=https://sourceforge.net/projects/pnp4nagios/files/latest

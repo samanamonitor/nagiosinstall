@@ -86,6 +86,12 @@ if ! id nagios > /dev/null 2>&1; then
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
 fi
 
+if [ -d /usr/local/nagios/etc ]; then
+    new=0
+else
+    new=1
+fi
+
 add-local-volume nagios_etc /usr/local/nagios/etc
 add-local-volume nagios_libexec /usr/local/nagios/libexec
 add-local-volume nagios_var /usr/local/nagios/var
@@ -112,7 +118,7 @@ if [ "$SM_ID" == "" ]; then
         --name sm -it -d $IMAGE
 fi
 
-ETCD_ID=$(docker ps -f name=etcd -q)
+ETCD_ID=$(docker ps -af name=etcd -q)
 if [ "$ETCD_ID" == "" ]; then
     docker run -d -p 2379:2379 \
         --volume etcd_data:/etcd-data \
@@ -124,7 +130,7 @@ if [ "$ETCD_ID" == "" ]; then
         --snapshot-count 5000
 fi
 
-if [ -f /usr/local/nagios/etc/new ]; then
+if $new then
     sed -i -e "/USER12/d" \
         -e "/USER13/d" \
         -e "/USER11/d" \

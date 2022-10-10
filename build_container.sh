@@ -44,9 +44,10 @@ build_nagios() {
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
-    wget -P ${TEMPDIR}/nagios.tar.gz ${NAGIOS_URL}
+    wget -O ${TEMPDIR}/nagios.tar.gz ${NAGIOS_URL}
+    mkdir -p ${TEMPDIR}/nagios
     cd ${TEMPDIR}
-    tar -zxvf nagios.tar.gz
+    tar --strip-components=1 -C nagios -zxvf nagios.tar.gz
     cd nagios
     ./configure --with-nagios-group=nagios \
         --with-command-group=nagcmd \
@@ -75,9 +76,10 @@ build_nagios_plugins() {
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
-    wget -P ${TEMPDIR}/nagios-plugins.tar.gz ${NAGIOS_PLUGINS_URL}
+    wget -O ${TEMPDIR}/nagios-plugins.tar.gz ${NAGIOS_PLUGINS_URL}
+    mkdir -p ${TEMPDIR}/nagios-plugins
     cd ${TEMPDIR}
-    tar zxvf nagios-plugins.tar.gz
+    tar --strip-components=1 -C nagios-plugins -zxvf nagios-plugins.tar.gz
     cd nagios-plugins
     ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd --enable-perl-modules \
         --prefix=${BUILD_DIR}/nagios
@@ -96,10 +98,11 @@ build_pnp4nagios() {
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
-    wget "https://sourceforge.net/projects/pnp4nagios/files/latest" -O ${TEMPDIR}/pnp4nagios.latest.tar.gz
+    wget -O ${TEMPDIR}/pnp4nagios.latest.tar.gz ${PNP4NAGIOS_URL}
+    mkdir -p ${TEMPDIR}/pnp4nagios
     cd ${TEMPDIR}
-    tar zxvf pnp4nagios.latest.tar.gz
-    cd pnp4nagios-0.6.26
+    tar --strip-components=1 -C pnp4nagios -zxvf pnp4nagios.latest.tar.gz
+    cd pnp4nagios
     ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd  \
         --with-httpd-conf=${BUILD_DIR}/apache2/sites-available \
         --prefix=${BUILD_DIR}/pnp4nagios
@@ -145,14 +148,13 @@ build_tarball() {
 }
 
 install_prereqs() {
-    LIBS="apache2 libgd3 ssmtp libapache2-mod-php unzip libapache2-mod-wsgi \
-        libldap-2.4-2 libkrb5-3 libssl1.1 iputils-ping smbclient snmp \
-        libdbi1 libmysqlclient20 libpq5 dnsutils fping libnet-snmp-perl \
+    LIBS="apache2 libgd3 ssmtp libapache2-mod-php unzip libapache2-mod-wsgi-py3 \
+        libldap-common libkrb5-3 libssl3 iputils-ping smbclient snmp \
+        libdbi1 libmysqlclient21 libpq5 dnsutils fping libnet-snmp-perl \
         rrdtool librrdtool-oo-perl php-xml git ansible php-sybase \
         libhttp-request-ascgi-perl libnumber-format-perl \
         libconfig-inifiles-perl libdatetime-perl python-pip \
-        libjansson4 libpython3.6 \
-        python3 python3-urllib3 inetutils-ping python3-smbc"
+        python3 python3-urllib3 python3-smbc"
     apt update
     apt install -y $LIBS
 
@@ -164,9 +166,9 @@ install_prereqs() {
 }
 
 install_pywinrm() {
-    # TODO: requesting tz info. Need to fix
-    pip install requests_ntlm
-    pip install pywinrm
+    LIBS="python3-winrm"
+    apt update
+    apt install -y $LIBS
 }
 
 install_wmi() {
@@ -257,7 +259,6 @@ case $1 in
 "installall")
     install_prereqs
     install_pywinrm
-    install_wmi
     install_nagios
     install_pnp4nagios
     install_check_samana

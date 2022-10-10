@@ -1,4 +1,4 @@
-FROM ubuntu:jammy AS samanamon
+FROM %DIST_VERSION% AS samanamon
 ENV TZ=America/New_York
 ENV DEBIAN_FRONTEND="noninteractive" 
 COPY apps.tar start.sh build_container.sh build_config.dat /opt/

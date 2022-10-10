@@ -15,8 +15,8 @@ NAGCMD_GID=5002
 DIST=ubuntu
 
 # Set image URL to download tarball and image name
-IMAGE_URL="" # s3 url to samanamonitor.tgz image
-IMAGE=samanamon:v1
+IMAGE_URL="https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/nagiosinstall.tar.gz" # s3 url to samanamonitor.tgz image
+IMAGE=samanamon:v2.0
 
 # Set SNMP community for monitoring components
 NAGIOS_SNMP_COMMUNITY=

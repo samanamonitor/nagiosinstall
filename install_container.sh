@@ -204,6 +204,6 @@ EOF
     set -e
 fi
 git clone https://github.com/samanamonitor/check_samana.git
-apt install -y make
+apt install -y make etcd-client
 make -C check_samana
 make -C check_samana install

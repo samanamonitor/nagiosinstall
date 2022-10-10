@@ -2,11 +2,13 @@
 
 /usr/local/nagios/bin/nagios /etc/nagios/nagios.cfg  >> /usr/local/nagios/var/nagios-service.log 2>&1 &
 status=$?
+pid=$!
 if [ $status -ne 0 ]; then
   echo "Failed to start Nagios: $status"
   exit $status
 fi
 
+echo $pid > /usr/local/nagios/var/nagios.lock
 rm /run/apache2/apache2.pid
 rm /run/etcd.pid
 

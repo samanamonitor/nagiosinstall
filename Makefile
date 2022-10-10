@@ -2,7 +2,7 @@ IMAGE_NAME=nagiosbuild
 VOLUME_NAME=usr_local
 INSTALL_DIR=/usr/src/install
 
-COMPONENTS=build_wmi build_nagios build_nagios_plugins build_pnp4nagios build_check_wmi_plus build_nagiosinstall
+COMPONENTS=build_nagios build_nagios_plugins build_pnp4nagios build_nagiosinstall
 
 publish: nagiosinstall.tar.gz
 	aws s3 cp $< s3://monitor.samanagroup.co --acl public-read

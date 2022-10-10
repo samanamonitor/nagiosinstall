@@ -37,24 +37,24 @@ build_wmi() {
 ##############donwload and install Nagios################
 build_nagios() {
     local TEMPDIR=$(mktemp -d)
-    LIBS="wget apache2 build-essential libgd-dev unzip libapache2-mod-php"
+    LIBS="wget apache2 build-essential libgd-dev unzip libapache2-mod-php libssl-dev"
     DEBIAN_FRONTEND="noninteractive" apt install -y $LIBS
     groupadd -g ${NAGIOS_GID} nagios
     groupadd -g ${NAGCMD_GID} nagcmd
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
-    wget -P ${TEMPDIR} http://prdownloads.sourceforge.net/sourceforge/nagios/nagios-4.2.0.tar.gz
+    wget -P ${TEMPDIR}/nagios.tar.gz ${NAGIOS_URL}
     cd ${TEMPDIR}
-    tar -zxvf nagios-4.2.0.tar.gz
-    cd nagios-4.2.0
+    tar -zxvf nagios.tar.gz
+    cd nagios
     ./configure --with-nagios-group=nagios \
         --with-command-group=nagcmd \
         --with-httpd-conf=${BUILD_DIR}/apache2/sites-available \
         --prefix=${BUILD_DIR}/nagios
     make all 
     make install 
-    #make install-init
+    make install-init
     make install-config
     make install-commandmode
     install -d -o root -g root ${BUILD_DIR}/apache2/sites-available/
@@ -66,18 +66,21 @@ build_nagios() {
 build_nagios_plugins() {
     local TEMPDIR=$(mktemp -d)
     LIBS="libldap2-dev libkrb5-dev libssl-dev iputils-ping smbclient snmp \
-        libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libnet-snmp-perl" # removed libfreeradius-client-dev for bionic
+        libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libnet-snmp-perl \
+        libcrypt-x509-perl libdatetime-format-dateparse-perl libtext-glob-perl \
+        libwww-perl ssh-client" # removed libfreeradius-client-dev for bionic
     apt install -y $LIBS
     groupadd -g ${NAGIOS_GID} nagios
     groupadd -g ${NAGCMD_GID} nagcmd
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
-    wget -P ${TEMPDIR} http://nagios-plugins.org/download/nagios-plugins-2.1.2.tar.gz
+    wget -P ${TEMPDIR}/nagios-plugins.tar.gz ${NAGIOS_PLUGINS_URL}
     cd ${TEMPDIR}
-    tar zxvf nagios-plugins-2.1.2.tar.gz
-    cd nagios-plugins-2.1.2
-    ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd --prefix=${BUILD_DIR}/nagios
+    tar zxvf nagios-plugins.tar.gz
+    cd nagios-plugins
+    ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd --enable-perl-modules \
+        --prefix=${BUILD_DIR}/nagios
     make
     make install
     install -d -o root -g root ${BUILD_DIR}/apache2/sites-available/
@@ -148,13 +151,14 @@ install_prereqs() {
         rrdtool librrdtool-oo-perl php-xml git ansible php-sybase \
         libhttp-request-ascgi-perl libnumber-format-perl \
         libconfig-inifiles-perl libdatetime-perl python-pip \
-        python3 python3-urllib3"
+        libjansson4 libpython3.6 \
+        python3 python3-urllib3 inetutils-ping python3-smbc"
     apt update
     apt install -y $LIBS
 
     groupadd -g ${NAGIOS_GID} nagios
     groupadd -g ${NAGCMD_GID} nagcmd
-    useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
+    useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} -d ${BUILD_DIR}/nagios nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
 }
@@ -207,8 +211,8 @@ install_pynag() {
     local CURDIR=$(pwd)
     git clone https://github.com/samanamonitor/pynag.git ${TEMPDIR}
     cd ${TEMPDIR}
-    python setup.py build
-    python setup.py install
+    python3 setup.py build
+    python3 setup.py install
     cd ${CURDIR}
     rm -Rf ${TEMPDIR}
 }
@@ -260,7 +264,6 @@ case $1 in
     install_mibs
     install_pynag
     install_check_mssql
-    install_check_wmi_plus
     install_start
     install_cleanup
     ;;

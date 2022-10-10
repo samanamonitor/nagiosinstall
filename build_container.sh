@@ -8,12 +8,12 @@ set -xe
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-if [ ! -f $DIR/config.dat ]; then
+if [ ! -f $DIR/build_config.dat ]; then
     echo "Configuration file not found. Use config.dat.example as a base"
     exit 1
 fi
 
-. $DIR/config.dat
+. $DIR/build_config.dat
 
 if [ "$CONFIG_TYPE" != "build" ]; then
     echo "Invalid config file. Use build_config.dat.example as a template."
@@ -52,7 +52,8 @@ build_nagios() {
     ./configure --with-nagios-group=nagios \
         --with-command-group=nagcmd \
         --with-httpd-conf=${BUILD_DIR}/apache2/sites-available \
-        --prefix=${BUILD_DIR}/nagios
+        --prefix=${BUILD_DIR}/nagios \
+        --with-initdir=${BUILD_DIR}/nagios/etc/init.d
     make all 
     make install 
     make install-init
@@ -185,6 +186,7 @@ install_nagios() {
         exit 1
     fi
     mv ${BUILD_DIR}/apache2/sites-available/nagios.conf /etc/apache2/sites-available
+    /usr/bin/install -c -m 755 -o root -g root /usr/local/nagios/etc/init.d/nagios /etc/init.d/
     a2ensite nagios
     a2enmod rewrite
     a2enmod cgi
@@ -288,6 +290,9 @@ case $1 in
     ;;
 "build_tarball")
     build_tarball
+    ;;
+"shell")
+    /bin/bash
     ;;
 *)
     ;;

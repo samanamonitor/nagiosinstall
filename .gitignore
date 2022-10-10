@@ -1,2 +1,14 @@
 config.dat
 build_config.dat
+build_image
+build_nagios
+build_nagios_plugins
+build_nagiosinstall
+build_pnp4nagios
+build_volume
+image_tarball
+*.tar
+*.tar.gz
+*.log
+Dockerfile.build
+Dockerfile.install

@@ -20,6 +20,11 @@ if [ "$CONFIG_TYPE" != "build" ]; then
     exit 1
 fi
 
+if [ "${SAMM_PWD}" == "" || "${SAMM_PWD}" == "set-password" ]; then
+    echo "SAMM password not set. Aborting"
+    exit 1
+fi
+
 build_wmi() {
     # run the following commands on windows for winRM to be enabled
     # winrm quickconfig -transport:https
@@ -118,6 +123,7 @@ build_pnp4nagios() {
     ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd  \
         --with-httpd-conf=${BUILD_DIR}/apache2/sites-available \
         --prefix=${BUILD_DIR}/pnp4nagios
+    sed -i '1634d' cgi/cgiutils.c
     make all
     make fullinstall
 
@@ -238,13 +244,6 @@ install_pynag() {
 install_check_mssql() {
     sed -i '/^;\s\+tds\s\+version/a tds version = 8.0' \
         /etc/freetds/freetds.conf
-}
-
-install_check_wmi_plus() {
-    cp /usr/local/nagios/etc/check_wmi_plus.conf.sample \
-        /usr/local/nagios/etc/check_wmi_plus.conf
-    sed -i -e "s|^\$base_dir=.*|\$base_dir='/usr/local/nagios/libexec';|" \
-        /usr/local/nagios/etc/check_wmi_plus.conf
 }
 
 install_start() {

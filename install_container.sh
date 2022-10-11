@@ -26,6 +26,11 @@ if [ "${IMAGE}" == "" ]; then
     exit 1
 fi
 
+if [ -z "${SAMM_PWD}" || "${SAMM_PWD}" == "set-password" ]; then
+    echo "SAMM password not set. Aborting"
+    exit 1
+fi
+
 NAGIOS_IP=$1
 
 if [ -z "$NAGIOS_IP" ]; then

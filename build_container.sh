@@ -62,6 +62,13 @@ build_nagios() {
     install -d -o root -g root ${BUILD_DIR}/apache2/sites-available/
     make install-webconf
     cp -R contrib/eventhandlers/ ${BUILD_DIR}/nagios/libexec/
+    install -o root -g root -m 0664 ${DIR}/nagiosweb/index.php ${BUILD_DIR}/nagios/share
+    install -o root -g root -m 0664 ${DIR}/nagiosweb/main.php ${BUILD_DIR}/nagios/share
+    install -o root -g root -m 0664 ${DIR}/nagiosweb/side.php ${BUILD_DIR}/nagios/share
+    wget -O ${BUILDDIR}/nagios/share/images/SamanaGroup.png \
+        https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/SamanaGroup.png
+    wget -O ${BUILDDIR}/nagios/share/images/SAMM.png \
+        https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/SAMM.png
 }
 
 ##############Configure nagios pluginss################
@@ -87,6 +94,10 @@ build_nagios_plugins() {
     make
     make install
     install -d -o root -g root ${BUILD_DIR}/apache2/sites-available/
+    RABBIT_TEMP=$(mktemp -d)
+    cd ${RABBIT_TEMP}
+    git clone https://github.com/nagios-plugins-rabbitmq/nagios-plugins-rabbitmq
+    install -o root -g root nagios-plugins-rabbitmq/scripts ${BUILD_DIR}/nagios/libexec
 }
 
 ##############Configure pnp4nagios#####################
@@ -152,7 +163,10 @@ install_prereqs() {
         rrdtool librrdtool-oo-perl php-xml git ansible php-sybase \
         libhttp-request-ascgi-perl libnumber-format-perl \
         libconfig-inifiles-perl libdatetime-perl python-pip \
-        python3 python3-urllib3 python3-smbc"
+        python3 python3-urllib3 python3-smbc ceph-base"
+####### Following libraries are necessary for VMWare SDK - Disabled for now
+#        libxml-libxml-perl libxml2-dev xml2 uuid-dev perl-doc rpm \
+#        libsoap-lite-perl"
     apt update
     apt install -y $LIBS
 
@@ -187,7 +201,7 @@ install_nagios() {
     a2ensite nagios
     a2enmod rewrite
     a2enmod cgi
-    htpasswd -b -c ${BUILD_DIR}/nagios/etc/htpasswd.users nagiosadmin Samana81.
+    htpasswd -b -c ${BUILD_DIR}/nagios/etc/htpasswd.users nagiosadmin "${SAMM_PWD}"
     ln -s ${BUILD_DIR}/nagios/etc /etc/nagios
 }
 

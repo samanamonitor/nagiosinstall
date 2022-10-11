@@ -49,4 +49,5 @@ clean:
 	-docker volume rm ${VOLUME_NAME}
 	rm -f build_image build_volume $(COMPONENTS) \
 		config.dat apps.tar* image_tarball nagiosinstall.tar.gz \
-		Dockerfile.build Dockerfile.install
+		Dockerfile.build Dockerfile.install \
+		build_config.dat

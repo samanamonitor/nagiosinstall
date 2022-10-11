@@ -92,10 +92,8 @@ else
     new=1
 fi
 
-add-local-volume nagios_etc /usr/local/nagios/etc
-add-local-volume nagios_libexec /usr/local/nagios/libexec
-add-local-volume nagios_var /usr/local/nagios/var
-add-local-volume pnp4nagios_perfdata /usr/local/pnp4nagios/var/perfdata
+add-local-volume nagios /usr/local/nagios
+add-local-volume pnp4nagios /usr/local/pnp4nagios
 add-local-volume ssmtp_etc /usr/local/ssmtp/etc
 add-local-volume apache_etc /usr/local/apache2/etc
 add-local-volume apache_log /usr/local/apache2/log
@@ -108,10 +106,8 @@ chmod o+x /var/lib/docker/volumes
 SM_ID=$(docker ps -f name=sm -q)
 if [ "$SM_ID" == "" ]; then
     docker run -p 80:80 -p 443:443 \
-        --mount source=nagios_etc,target=/usr/local/nagios/etc \
-        --mount source=nagios_libexec,target=/usr/local/nagios/libexec \
-        --mount source=nagios_var,target=/usr/local/nagios/var \
-        --mount source=pnp4nagios_perfdata,target=/usr/local/pnp4nagios/var/perfdata \
+        --mount source=nagios,target=/usr/local/nagios \
+        --mount source=pnp4nagios,target=/usr/local/pnp4nagios \
         --mount source=ssmtp_etc,target=/etc/ssmtp \
         --mount source=apache_etc,target=/etc/apache2 \
         --mount source=apache_log,target=/var/log/apache2 \
@@ -132,7 +128,7 @@ if [ "$ETCD_ID" == "" ]; then
         --snapshot-count 5000
 fi
 
-if $new then
+if $new; then
     sed -i -e "/USER12/d" \
         -e "/USER13/d" \
         -e "/USER11/d" \
@@ -211,7 +207,13 @@ EOF
     fi
     set -e
 fi
-git clone https://github.com/samanamonitor/check_samana.git
-apt install -y make etcd-client
-make -C check_samana
-make -C check_samana install
+cd /usr/src
+if [ ! -d /usr/src/check_samana ]; then
+    git clone https://github.com/samanamonitor/check_samana.git
+else
+    cd check_samana
+    git pull
+fi
+apt install -y make
+make -C /usr/src/check_samana
+make -C /usr/src/check_samana install

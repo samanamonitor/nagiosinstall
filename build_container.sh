@@ -173,6 +173,9 @@ install_nagios() {
     chown nagios.nagios ${BUILD_DIR}/nagios/etc/htpasswd.users
     chmod 0640 ${BUILD_DIR}/nagios/etc/htpasswd.users
     ln -s ${BUILD_DIR}/nagios/etc /etc/nagios
+    # Enable md4 on openssl for ntlm authentication
+    sed -i '60 i legacy = legacy_sect\n\n[legacy_sect]\nactivate = 1\n' \
+        /etc/ssl/openssl.cnf
 }
 
 install_pnp4nagios() {

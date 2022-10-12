@@ -133,7 +133,8 @@ if [ "$ETCD_ID" == "" ]; then
         --snapshot-count 5000
 fi
 
-if $new; then
+if [ "$new" == "1" ]; then
+    docker exec -it sm htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin "${SAMM_PWD}"
     sed -i -e "/USER12/d" \
         -e "/USER13/d" \
         -e "/USER11/d" \

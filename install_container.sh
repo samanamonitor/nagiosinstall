@@ -26,7 +26,7 @@ if [ "${IMAGE}" == "" ]; then
     exit 1
 fi
 
-if [ -z "${SAMM_PWD}" || "${SAMM_PWD}" == "set-password" ]; then
+if [ -z "${SAMM_PWD}" ] || [ "${SAMM_PWD}" == "set-password" ]; then
     echo "SAMM password not set. Aborting"
     exit 1
 fi
@@ -104,7 +104,7 @@ add-local-volume apache_etc /usr/local/apache2/etc
 add-local-volume apache_log /usr/local/apache2/log
 add-local-volume apache_html /usr/local/apache2/html
 add-local-volume etcd_data /usr/local/etcd/var
-add-local-volume smnp_mibs /usr/local/smnp/mibs
+add-local-volume snmp_mibs /usr/local/snmp/mibs
 
 chmod o+x /var/lib/docker/volumes
 
@@ -127,7 +127,7 @@ if [ "$ETCD_ID" == "" ]; then
         --volume etcd_data:/etcd-data \
         --name etcd ${REGISTRY}:latest \
         /usr/local/bin/etcd --data-dir /etcd-data --name node0 \
-        --advertise-client-urls http://${NAGIOS_IP}:2379 \
+        --advertise-client-urls http://${NAGIOS_IP}:2379,http://localhost:2379 \
         --listen-client-urls http://0.0.0.0:2379 --max-snapshots 2 \
         --max-wals 5 --enable-v2 -auto-compaction-retention 1 \
         --snapshot-count 5000

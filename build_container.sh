@@ -20,25 +20,6 @@ if [ "$CONFIG_TYPE" != "build" ]; then
     exit 1
 fi
 
-if [ "${SAMM_PWD}" == "" || "${SAMM_PWD}" == "set-password" ]; then
-    echo "SAMM password not set. Aborting"
-    exit 1
-fi
-
-build_wmi() {
-    # run the following commands on windows for winRM to be enabled
-    # winrm quickconfig -transport:https
-    LIBS="git build-essential autoconf python"
-    local TEMPDIR=$(mktemp -d)
-    apt update
-    apt install -y $LIBS
-    git clone https://github.com/samanamonitor/wmi.git ${TEMPDIR}
-    cd ${TEMPDIR}
-    ulimit -n 100000 && make "CPP=gcc -E -ffreestanding"
-    install -d ${BUILD_DIR}/wmi/
-    install -o root -g root -m 0755 ${TEMPDIR}/Samba/source/bin/wmic ${BUILD_DIR}/wmi/
-}
-
 ##############donwload and install Nagios################
 build_nagios() {
     local TEMPDIR=$(mktemp -d)
@@ -58,7 +39,10 @@ build_nagios() {
         --with-command-group=nagcmd \
         --with-httpd-conf=${BUILD_DIR}/apache2/sites-available \
         --prefix=${BUILD_DIR}/nagios \
-        --with-initdir=${BUILD_DIR}/nagios/etc/init.d
+        --with-initdir=${BUILD_DIR}/nagios/etc/init.d \
+        --with-cgiurl=/samm/cgi-bin \
+        --with-htmurl=/samm
+    sed -i '1634d' cgi/cgiutils.c
     make all 
     make install 
     make install-init
@@ -66,14 +50,18 @@ build_nagios() {
     make install-commandmode
     install -d -o root -g root ${BUILD_DIR}/apache2/sites-available/
     make install-webconf
+    echo "RedirectMatch ^/$ /samm/" >> ${BUILD_DIR}/apache2/sites-available/nagios.conf
     cp -R contrib/eventhandlers/ ${BUILD_DIR}/nagios/libexec/
     install -o root -g root -m 0664 ${DIR}/nagiosweb/index.php ${BUILD_DIR}/nagios/share
     install -o root -g root -m 0664 ${DIR}/nagiosweb/main.php ${BUILD_DIR}/nagios/share
     install -o root -g root -m 0664 ${DIR}/nagiosweb/side.php ${BUILD_DIR}/nagios/share
-    wget -O ${BUILDDIR}/nagios/share/images/SamanaGroup.png \
+    wget -O ${BUILD_DIR}/nagios/share/images/SamanaGroup.png \
         https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/SamanaGroup.png
-    wget -O ${BUILDDIR}/nagios/share/images/SAMM.png \
+    wget -O ${BUILD_DIR}/nagios/share/images/SAMM.png \
         https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/SAMM.png
+    wget -O ${BUILD_DIR}/nagios/share/images/favicon.ico \
+        https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/favicon.ico
+    sed -i "s/^#enable_page_tour=1/enable_page_tour=0/" ${BUILD_DIR}/nagios/etc/cgi.cfg
 }
 
 ##############Configure nagios pluginss################
@@ -102,7 +90,7 @@ build_nagios_plugins() {
     RABBIT_TEMP=$(mktemp -d)
     cd ${RABBIT_TEMP}
     git clone https://github.com/nagios-plugins-rabbitmq/nagios-plugins-rabbitmq
-    install -o root -g root nagios-plugins-rabbitmq/scripts ${BUILD_DIR}/nagios/libexec
+    install -o root -g root ${RABBIT_TEMP}/nagios-plugins-rabbitmq/scripts/* ${BUILD_DIR}/nagios/libexec
 }
 
 ##############Configure pnp4nagios#####################
@@ -123,29 +111,11 @@ build_pnp4nagios() {
     ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd  \
         --with-httpd-conf=${BUILD_DIR}/apache2/sites-available \
         --prefix=${BUILD_DIR}/pnp4nagios
-    sed -i '1634d' cgi/cgiutils.c
     make all
     make fullinstall
 
     mv ${BUILD_DIR}/pnp4nagios/share/install.php ${BUILD_DIR}/pnp4nagios/share/install-old.php
     patch ${BUILD_DIR}/pnp4nagios/share/application/models/data.php $DIR/pnp4nagios.patch
-}
-
-build_check_wmi_plus() {
-    local TEMPDIR=$(mktemp -d)
-    groupadd -g ${NAGIOS_GID} nagios
-    groupadd -g ${NAGCMD_GID} nagcmd
-    useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
-    usermod -a -G nagcmd nagios
-    usermod -a -G nagios,nagcmd www-data
-    git clone https://github.com/samanamonitor/check_wmi_plus.git ${TEMPDIR}
-    install -d -o nagios -g nagcmd ${BUILD_DIR}/nagios/libexec
-    install -o nagios -g nagcmd -m 0755 ${TEMPDIR}/check_wmi_plus_help.pl ${BUILD_DIR}/nagios/libexec
-    install -o nagios -g nagcmd -m 0755 ${TEMPDIR}/check_wmi_plus.pl ${BUILD_DIR}/nagios/libexec
-    install -o nagios -g nagcmd -m 0755 ${TEMPDIR}/check_wmi_plus.README.txt ${BUILD_DIR}/nagios/libexec
-    install -d -o nagios -g nagcmd ${BUILD_DIR}/nagios/etc/check_wmi_plus
-    cp -R ${TEMPDIR}/etc/check_wmi_plus/* ${BUILD_DIR}/nagios/etc
-
 }
 
 build_nagiosinstall() {
@@ -184,17 +154,9 @@ install_prereqs() {
 }
 
 install_pywinrm() {
-    LIBS="python3-winrm"
+    LIBS="python3-winrm python3-etcd"
     apt update
     apt install -y $LIBS
-}
-
-install_wmi() {
-    if [ ! -d ${BUILD_DIR}/wmi ]; then
-        echo "Build directory missing from ${BUILD_DIR}/wmi"
-        exit 1
-    fi
-    install ${BUILD_DIR}/wmi/wmic /usr/local/bin
 }
 
 install_nagios() {
@@ -208,6 +170,8 @@ install_nagios() {
     a2enmod rewrite
     a2enmod cgi
     htpasswd -b -c ${BUILD_DIR}/nagios/etc/htpasswd.users nagiosadmin "${SAMM_PWD}"
+    chown nagios.nagios ${BUILD_DIR}/nagios/etc/htpasswd.users
+    chmod 0640 ${BUILD_DIR}/nagios/etc/htpasswd.users
     ln -s ${BUILD_DIR}/nagios/etc /etc/nagios
 }
 
@@ -218,10 +182,10 @@ install_pnp4nagios() {
 
 install_check_samana() {
     local TEMPDIR
-    TEMPDIR=$(mktemp)
-    git clone https://github.com/samanamonitor/check_samana.git ${TEMPDIR}
-    make -C ${TEMPDIR}
-    make -C ${TEMPDIR} install
+    TEMPDIR=$(mktemp -d)
+    git clone https://github.com/samanamonitor/check_samana.git ${TEMPDIR}/check_samana
+    make -C ${TEMPDIR}/check_samana
+    make -C ${TEMPDIR}/check_samana install
     rm -Rf ${TEMPDIR}
 }
 
@@ -283,9 +247,6 @@ case $1 in
     install_start
     install_cleanup
     ;;
-"build_wmi")
-    build_wmi
-    ;;
 "build_nagios")
     build_nagios
     ;;
@@ -310,4 +271,3 @@ case $1 in
 *)
     ;;
 esac
-

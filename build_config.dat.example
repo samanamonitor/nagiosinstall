@@ -15,4 +15,4 @@ NAGIOS_PLUGINS_URL=http://nagios-plugins.org/download/nagios-plugins-2.3.3.tar.g
 PNP4NAGIOS_URL=https://sourceforge.net/projects/pnp4nagios/files/latest
 #VMWARE_SDK_URL=https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/VMware-vSphere-Perl-SDK-6.5.0-4566394.x86_64.tar.gz
 
-SAMM_PWD=set-password
+SAMM_PWD=password

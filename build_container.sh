@@ -93,31 +93,6 @@ build_nagios_plugins() {
     install -o root -g root ${RABBIT_TEMP}/nagios-plugins-rabbitmq/scripts/* ${BUILD_DIR}/nagios/libexec
 }
 
-##############Configure pnp4nagios#####################
-build_pnp4nagios() {
-    local TEMPDIR=$(mktemp -d)
-    LIBS="rrdtool librrdtool-oo-perl php-xml"
-    apt install -y $LIBS
-    groupadd -g ${NAGIOS_GID} nagios
-    groupadd -g ${NAGCMD_GID} nagcmd
-    useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
-    usermod -a -G nagcmd nagios
-    usermod -a -G nagios,nagcmd www-data
-    wget -O ${TEMPDIR}/pnp4nagios.latest.tar.gz ${PNP4NAGIOS_URL}
-    mkdir -p ${TEMPDIR}/pnp4nagios
-    cd ${TEMPDIR}
-    tar --strip-components=1 -C pnp4nagios -zxvf pnp4nagios.latest.tar.gz
-    cd pnp4nagios
-    ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd  \
-        --with-httpd-conf=${BUILD_DIR}/apache2/sites-available \
-        --prefix=${BUILD_DIR}/pnp4nagios
-    make all
-    make fullinstall
-
-    mv ${BUILD_DIR}/pnp4nagios/share/install.php ${BUILD_DIR}/pnp4nagios/share/install-old.php
-    patch ${BUILD_DIR}/pnp4nagios/share/application/models/data.php $DIR/pnp4nagios.patch
-}
-
 build_nagiosinstall() {
     groupadd -g ${NAGIOS_GID} nagios
     groupadd -g ${NAGCMD_GID} nagcmd
@@ -174,13 +149,16 @@ install_nagios() {
     chmod 0640 ${BUILD_DIR}/nagios/etc/htpasswd.users
     ln -s ${BUILD_DIR}/nagios/etc /etc/nagios
     # Enable md4 on openssl for ntlm authentication
-    sed -i '60 i legacy = legacy_sect\n\n[legacy_sect]\nactivate = 1\n' \
+    sed -i -e '/default = default_sect/alegacy = legacy_sect\n' \
+        -e '/\[default_sect\]/a activate = 1\n\n[legacy_sect]\nactivate = 1\n' \
         /etc/ssl/openssl.cnf
+    ln -s /usr/bin/python2 /usr/bin/python
+    pip2 install -t /usr/local/nagios/libexec/lib urllib3
 }
 
 install_pnp4nagios() {
-    mv ${BUILD_DIR}/apache2/sites-available/pnp4nagios.conf /etc/apache2/sites-available
-    a2ensite pnp4nagios
+    pip2 install Graphios
+    mkdir -p ${BUILD_DIR}/nagios/var/spool/graphios
 }
 
 install_check_samana() {
@@ -255,12 +233,6 @@ case $1 in
     ;;
 "build_nagios_plugins")
     build_nagios_plugins
-    ;;
-"build_pnp4nagios")
-    build_pnp4nagios
-    ;;
-"build_check_wmi_plus")
-    build_check_wmi_plus
     ;;
 "build_nagiosinstall")
     build_nagiosinstall

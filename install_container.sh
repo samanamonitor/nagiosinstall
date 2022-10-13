@@ -98,13 +98,13 @@ else
 fi
 
 add-local-volume nagios /usr/local/nagios
-add-local-volume pnp4nagios /usr/local/pnp4nagios
 add-local-volume ssmtp_etc /usr/local/ssmtp/etc
 add-local-volume apache_etc /usr/local/apache2/etc
 add-local-volume apache_log /usr/local/apache2/log
 add-local-volume apache_html /usr/local/apache2/html
 add-local-volume etcd_data /usr/local/etcd/var
 add-local-volume snmp_mibs /usr/local/snmp/mibs
+add-local-volume graphite /usr/local/graphite
 
 chmod o+x /var/lib/docker/volumes
 
@@ -112,7 +112,6 @@ SM_ID=$(docker ps -f name=sm -q)
 if [ "$SM_ID" == "" ]; then
     docker run -p 80:80 -p 443:443 \
         --mount source=nagios,target=/usr/local/nagios \
-        --mount source=pnp4nagios,target=/usr/local/pnp4nagios \
         --mount source=ssmtp_etc,target=/etc/ssmtp \
         --mount source=apache_etc,target=/etc/apache2 \
         --mount source=apache_log,target=/var/log/apache2 \
@@ -124,6 +123,7 @@ fi
 ETCD_ID=$(docker ps -af name=etcd -q)
 if [ "$ETCD_ID" == "" ]; then
     docker run -d -p 2379:2379 \
+        --restart=always \
         --volume etcd_data:/etcd-data \
         --name etcd ${REGISTRY}:latest \
         /usr/local/bin/etcd --data-dir /etcd-data --name node0 \
@@ -131,6 +131,20 @@ if [ "$ETCD_ID" == "" ]; then
         --listen-client-urls http://0.0.0.0:2379 --max-snapshots 2 \
         --max-wals 5 --enable-v2 -auto-compaction-retention 1 \
         --snapshot-count 5000
+fi
+
+GRAPHITE_ID=$(docker ps -af name=graphite)
+if [ -z "${GRAPHITE_ID}" ]; then
+    docker run -d \
+         --name graphite \
+         --restart=always \
+         --mount source=graphite,target=/opt/graphite \
+         -p 8080:80 \
+         -p 2003-2004:2003-2004 \
+         -p 2023-2024:2023-2024 \
+         -p 8125:8125/udp \
+         -p 8126:8126 \
+         graphiteapp/graphite-statsd
 fi
 
 if [ "$new" == "1" ]; then
@@ -177,9 +191,9 @@ if [ "$new" == "1" ]; then
 EOF
 
     cat <<EOF > /usr/local/nagios/etc/samananagios.pw
-username=${NAGIOS_WMI_USER}@${NAGIOS_FQDN_DOMAIN}
+username=${NAGIOS_WMI_USER}
 password=${NAGIOS_WMI_PASSWORD}
-domain=
+domain=${NAGIOS_NETBIOS_DOMAIN}
 EOF
     chown ${NAGIOS_UID}.${NAGIOS_GID} /usr/local/nagios/etc/samananagios.pw
     chmod 660 /usr/local/nagios/etc/samananagios.pw
@@ -199,18 +213,42 @@ EOF
     if [  "$?" != "0" ]; then
         cat <<EOF >> /usr/local/nagios/etc/nagios.cfg
 process_performance_data=1
-service_perfdata_file=/usr/local/pnp4nagios/var/service-perfdata
-service_perfdata_file_template=DATATYPE::SERVICEPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tSERVICEDESC::\$SERVICEDESC\$\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\tSERVICESTATE::\$SERVICESTATE\$\tSERVICESTATETYPE::\$SERVICESTATETYPE\$
+service_perfdata_file=/usr/local/nagios/var/spool/graphios/service-perfdata
+service_perfdata_file_template=DATATYPE::SERVICEPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tSERVICEDESC::\$SERVICEDESC\$\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\tSERVICESTATE::\$SERVICESTATE\$\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\tGRAPHITEPREFIX::\$_HOSTGRAPHITEPREFIX\$\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
 service_perfdata_file_mode=a
 service_perfdata_file_processing_interval=15
-service_perfdata_file_processing_command=process-service-perfdata-file
-host_perfdata_file=/usr/local/pnp4nagios/var/host-perfdata
-host_perfdata_file_template=DATATYPE::HOSTPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tHOSTPERFDATA::\$HOSTPERFDATA\$\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$
+service_perfdata_file_processing_command=process-service-perfdata-file-graphios
+host_perfdata_file=/usr/local/nagios/var/spool/graphios/host-perfdata
+host_perfdata_file_template=DATATYPE::HOSTPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tHOSTPERFDATA::\$HOSTPERFDATA\$\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\tGRAPHITEPREFIX::\$_HOSTGRAPHITEPREFIX\$\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
 host_perfdata_file_mode=a
 host_perfdata_file_processing_interval=15
-host_perfdata_file_processing_command=process-host-perfdata-file
+host_perfdata_file_processing_command=process-host-perfdata-file-graphios
 EOF
     fi
+    cat <<EOF > /etc/graphios/graphios.cfg
+[graphios]
+replacement_character = _
+spool_directory = /usr/local/nagios/var/spool/graphios
+log_file = /usr/local/nagios/var/graphios.log
+log_max_size = 25165824
+log_level = logging.INFO
+debug = False
+sleep_time = 15
+sleep_max = 480
+test_mode = False
+use_service_desc = False
+replace_hostname = True
+reverse_hostname = False
+enable_carbon = True
+carbon_plaintext = False
+carbon_servers = $NAGIOS_IP:2004
+enable_statsd = False
+statsd_server = 127.0.0.1:8125
+enable_librato = False
+librato_whitelist = [".*"]
+enable_stdout = False
+nerf_stdout = True
+EOF
     set -e
 fi
 cd /usr/src

@@ -70,6 +70,21 @@ add-local-volume() {
 
 }
 
+set-key() {
+    local file=$1
+    shift
+    local key=$1
+    shift
+    if [ -f $file ]; then
+        sed -i -e "/^$key=.*/d" $file
+    fi
+    if [ "aa" == "a${@}a" ]; then
+        echo "#$key=<set value and remove comment>"
+    else
+        echo "$key=$@" >> $file
+    fi
+}
+
 IMAGE_ID=$(docker image ls ${IMAGE} -q)
 if [ "$IMAGE_ID" == "" ]; then
     if [ ! -f ${IMAGE_URL##*/} ]; then
@@ -133,7 +148,7 @@ if [ "$ETCD_ID" == "" ]; then
         --snapshot-count 5000
 fi
 
-GRAPHITE_ID=$(docker ps -af name=graphite)
+GRAPHITE_ID=$(docker ps -af name=graphite -q)
 if [ -z "${GRAPHITE_ID}" ]; then
     docker run -d \
          --name graphite \
@@ -148,108 +163,97 @@ if [ -z "${GRAPHITE_ID}" ]; then
 fi
 
 if [ "$new" == "1" ]; then
-    docker exec -it sm htpasswd -b -c /usr/local/nagios/etc/htpasswd.users nagiosadmin "${SAMM_PWD}"
-    sed -i -e "/USER12/d" \
-        -e "/USER13/d" \
-        -e "/USER11/d" \
-        -e "/USER9/d" \
-        -e "/USER14/d" \
-        -e "/USER15/d" \
-        -e "/USER30/d" \
-        -e "/USER31/d" \
-        -e "/USER32/d" \
-        -e "/USER33/d" \
-        /usr/local/nagios/etc/resource.cfg
-    cat <<EOF >> /usr/local/nagios/etc/resource.cfg
-# Sets \$USER3\$ for SNMP community
-\$USER3\$=${NAGIOS_SNMP_COMMUNITY}
+    docker exec -it sm htpasswd -b \
+        -c /usr/local/nagios/etc/htpasswd.users "${SAMM_USER}" "${SAMM_PWD}"
 
-# NetScaler SNMPv3 user
-#\$USER4\$=nagiosmonitor
+    NAGIOS_REC=/usr/local/nagios/etc/resource.cfg
+    echo "# Sets \$USER3\$ for SNMP community" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER3\$ ${NAGIOS_SNMP_COMMUNITY}
+    echo "# NetScaler SNMPv3 user" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER4\$ nagiosmonitor
+    echo "# NETBIOS domain for multiple checks" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER6\$ ${NAGIOS_NETBIOS_DOMAIN}
+    echo "# WMI user for servers" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER7\$ ${NAGIOS_WMI_USER}
+    echo "# WMI user's password" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER8\$ ${NAGIOS_WMI_PASSWORD}
+    echo "# Path with authentication credentials for scripts" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER9\$ /etc/nagios/samananagios.pw
+    echo "# Powershell script for citrix xa/xd monitoring" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER11\$ http://$NAGIOS_IP/samanamonctx.ps1
+    echo "# Powershell script for windows monitoring (legacy)" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER12\$ http://$NAGIOS_IP/samanamon.ps1
+    echo "# Etcd server URL (deprecated) is replaced by \$USER33\$" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER13\$ http://$NAGIOS_IP:2379
+    echo "# Slach domain" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER14\$ $SLACK_DOMAIN
+    echo "# Slach Tocken" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER15\$ $SLACK_TOKEN
+    echo "# Citrix Cloud customer_id" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER30\$
+    echo "# Citrix Cloud API client_id" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER31\$
+    echo "# Citrix Cloud API client_secret" >> ${NAGIOS_REC}
+    set-key ${NAGIOS_REC} \$USER32\$
+    set-key ${NAGIOS_REC} \$USER33\$ ${NAGIOS_IP}:2379
 
-# NETBIOS domain for multiple checks
-\$USER6\$=${NAGIOS_NETBIOS_DOMAIN}
+    PW_FILE=/usr/local/nagios/etc/samananagios.pw
+    set-key ${PW_FILE} username ${NAGIOS_WMI_USER}
+    set-key ${PW_FILE} password ${NAGIOS_WMI_PASSWORD}
+    set-key ${PW_FILE} domain ${NAGIOS_NETBIOS_DOMAIN}
+    chown nagios.nagios ${PW_FILE}
+    chmod 660 ${PW_FILE}
 
-# WMI user for servers
-\$USER7\$=${NAGIOS_WMI_USER}
+    SSMTP_FILE=/usr/local/ssmtp/etc/ssmtp.conf
 
-# WMI user's password
-\$USER8\$=${NAGIOS_WMI_PASSWORD}
+    set-key ${SSMTP_FILE} hostname ${NAGIOS_HOSTNAME}
+    set-key ${SSMTP_FILE} root ${NAGIOS_EMAIL}
+    set-key ${SSMTP_FILE} mailhub ${NAGIOS_SMTP_SERVER}
+    set-key ${SSMTP_FILE} FromLineOverride YES
+    set-key ${SSMTP_FILE} AuthUser ${NAGIOS_SMTP_USER}
+    set-key ${SSMTP_FILE} AuthPass ${NAGIOS_SMTP_PASSWORD}
+    set-key ${SSMTP_FILE} UseTLS YES
 
-# Path with authentication credentials for scripts
-\$USER9\$=/etc/nagios/samananagios.pw
-
-\$USER11\$=http://$NAGIOS_IP/samanamonctx.ps1
-\$USER12\$=http://$NAGIOS_IP/samanamon.ps1
-\$USER13\$=http://$NAGIOS_IP:2379
-\$USER14\$=$SLACK_DOMAIN
-\$USER15\$=$SLACK_TOKEN
-\$USER30\$=# replace with Citrix Cloud customer_id
-\$USER31\$=# replace with Citrix Cloud API client_id
-\$USER32\$=# replace with Citrix Cloud API client_secret
-\$USER33\$=# replace with ETCD server IP
-EOF
-
-    cat <<EOF > /usr/local/nagios/etc/samananagios.pw
-username=${NAGIOS_WMI_USER}
-password=${NAGIOS_WMI_PASSWORD}
-domain=${NAGIOS_NETBIOS_DOMAIN}
-EOF
-    chown ${NAGIOS_UID}.${NAGIOS_GID} /usr/local/nagios/etc/samananagios.pw
-    chmod 660 /usr/local/nagios/etc/samananagios.pw
-
-    cat <<EOF > /usr/local/ssmtp/etc/ssmtp.conf
-hostname=${NAGIOS_HOSTNAME}
-root=${NAGIOS_EMAIL}
-mailhub=${NAGIOS_SMTP_SERVER}
-FromLineOverride=YES
-AuthUser=${NAGIOS_SMTP_USER}
-AuthPass=${NAGIOS_SMTP_PASSWORD}
-UseTLS=YES
-EOF
-
+    NAGIOS_CFG=/usr/local/nagios/etc/nagios.cfg
+    GRAPHIOS_SPOOL=/usr/local/nagios/var/spool/graphios
+    mkdir -p ${GRAPHIOS_SPOOL}
+    sed -i "/^cfg_dir=\/etc\/nagios\/objects/d" ${NAGIOS_CFG}
+    set-key ${NAGIOS_CFG} process_performance_data 1
+    set-key ${NAGIOS_CFG} service_perfdata_file ${GRAPHIOS_SPOOL}/service-perfdata
+    set-key ${NAGIOS_CFG} service_perfdata_file_template DATATYPE::SERVICEPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tSERVICEDESC::\$SERVICEDESC\$\\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tSERVICESTATE::\$SERVICESTATE\$\\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\\tGRAPHITEPREFIX::samm\\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
+    set-key ${NAGIOS_CFG} service_perfdata_file_mode a
+    set-key ${NAGIOS_CFG} service_perfdata_file_processing_interval 15
+    set-key ${NAGIOS_CFG} service_perfdata_file_processing_command process-service-perfdata-file-graphios
+    set-key ${NAGIOS_CFG} host_perfdata_file ${GRAPHIOS_SPOOL}/host-perfdata
+    set-key ${NAGIOS_CFG} host_perfdata_file_template DATATYPE::HOSTPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tHOSTPERFDATA::\$HOSTPERFDATA\$\\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tGRAPHITEPREFIX::samm\\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
+    set-key ${NAGIOS_CFG} host_perfdata_file_mode a
+    set-key ${NAGIOS_CFG} host_perfdata_file_processing_interval 15
+    set-key ${NAGIOS_CFG} host_perfdata_file_processing_command process-host-perfdata-file-graphios
     set +e
-    grep -q -E "^process_performance_data=1" /usr/local/nagios/etc/nagios.cfg
-    if [  "$?" != "0" ]; then
-        cat <<EOF >> /usr/local/nagios/etc/nagios.cfg
-process_performance_data=1
-service_perfdata_file=/usr/local/nagios/var/spool/graphios/service-perfdata
-service_perfdata_file_template=DATATYPE::SERVICEPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tSERVICEDESC::\$SERVICEDESC\$\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\tSERVICESTATE::\$SERVICESTATE\$\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\tGRAPHITEPREFIX::\$_HOSTGRAPHITEPREFIX\$\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
-service_perfdata_file_mode=a
-service_perfdata_file_processing_interval=15
-service_perfdata_file_processing_command=process-service-perfdata-file-graphios
-host_perfdata_file=/usr/local/nagios/var/spool/graphios/host-perfdata
-host_perfdata_file_template=DATATYPE::HOSTPERFDATA\tTIMET::\$TIMET\$\tHOSTNAME::\$HOSTNAME\$\tHOSTPERFDATA::\$HOSTPERFDATA\$\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\tHOSTSTATE::\$HOSTSTATE\$\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\tGRAPHITEPREFIX::\$_HOSTGRAPHITEPREFIX\$\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
-host_perfdata_file_mode=a
-host_perfdata_file_processing_interval=15
-host_perfdata_file_processing_command=process-host-perfdata-file-graphios
-EOF
-    fi
-    cat <<EOF > /etc/graphios/graphios.cfg
-[graphios]
-replacement_character = _
-spool_directory = /usr/local/nagios/var/spool/graphios
-log_file = /usr/local/nagios/var/graphios.log
-log_max_size = 25165824
-log_level = logging.INFO
-debug = False
-sleep_time = 15
-sleep_max = 480
-test_mode = False
-use_service_desc = False
-replace_hostname = True
-reverse_hostname = False
-enable_carbon = True
-carbon_plaintext = False
-carbon_servers = $NAGIOS_IP:2004
-enable_statsd = False
-statsd_server = 127.0.0.1:8125
-enable_librato = False
-librato_whitelist = [".*"]
-enable_stdout = False
-nerf_stdout = True
-EOF
-    set -e
+
+    GRAPHIOS_CFG=/usr/local/nagios/etc/graphios/graphios.cfg
+    echo "[graphios]" > ${GRAPHIOS_CFG}
+    set-key ${GRAPHIOS_CFG} replacement_character  _
+    set-key ${GRAPHIOS_CFG} spool_directory  ${GRAPHIOS_SPOOL}
+    set-key ${GRAPHIOS_CFG} log_file  /usr/local/nagios/var/graphios.log
+    set-key ${GRAPHIOS_CFG} log_max_size  25165824
+    set-key ${GRAPHIOS_CFG} log_level  logging.INFO
+    set-key ${GRAPHIOS_CFG} debug  False
+    set-key ${GRAPHIOS_CFG} sleep_time  15
+    set-key ${GRAPHIOS_CFG} sleep_max  480
+    set-key ${GRAPHIOS_CFG} test_mode  False
+    set-key ${GRAPHIOS_CFG} use_service_desc  False
+    set-key ${GRAPHIOS_CFG} replace_hostname  True
+    set-key ${GRAPHIOS_CFG} reverse_hostname  False
+    set-key ${GRAPHIOS_CFG} enable_carbon  True
+    set-key ${GRAPHIOS_CFG} carbon_plaintext  False
+    set-key ${GRAPHIOS_CFG} carbon_servers  $NAGIOS_IP:2004
+    set-key ${GRAPHIOS_CFG} enable_statsd  False
+    set-key ${GRAPHIOS_CFG} statsd_server  127.0.0.1:8125
+    set-key ${GRAPHIOS_CFG} enable_librato  False
+    set-key ${GRAPHIOS_CFG} librato_whitelist  [".*"]
+    set-key ${GRAPHIOS_CFG} enable_stdout  False
+    set-key ${GRAPHIOS_CFG} nerf_stdout  True
 fi
 cd /usr/src
 if [ ! -d /usr/src/check_samana ]; then

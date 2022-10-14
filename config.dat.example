@@ -11,6 +11,7 @@ NAGIOS_UID=5001
 NAGIOS_GID=5001
 NAGCMD_GID=5002
 
+SAMM_USER=nagiosadmin
 SAMM_PWD=set-password
 
 # Set distribution type where the container is going to be installed (ubuntu or rhel)

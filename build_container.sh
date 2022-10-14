@@ -114,7 +114,7 @@ install_prereqs() {
         rrdtool librrdtool-oo-perl php-xml git ansible php-sybase \
         libhttp-request-ascgi-perl libnumber-format-perl \
         libconfig-inifiles-perl libdatetime-perl python-pip \
-        python3 python3-urllib3 python3-smbc ceph-base"
+        python3 python3-urllib3 python3-smbc ceph-base sudo"
 ####### Following libraries are necessary for VMWare SDK - Disabled for now
 #        libxml-libxml-perl libxml2-dev xml2 uuid-dev perl-doc rpm \
 #        libsoap-lite-perl"
@@ -156,9 +156,14 @@ install_nagios() {
     pip2 install -t /usr/local/nagios/libexec/lib urllib3
 }
 
-install_pnp4nagios() {
+install_graphios() {
     pip2 install Graphios
     mkdir -p ${BUILD_DIR}/nagios/var/spool/graphios
+    mkdir -p ${BUILD_DIR}/nagios/etc/graphios
+    mv /etc/graphios/graphios.cfg ${BUILD_DIR}/nagios/etc/graphios
+    chown nagios.nagios ${BUILD_DIR}/nagios/etc/graphios
+    ln -s ${BUILD_DIR}/nagios/etc/graphios/graphios.cfg /etc/graphios
+    sed -i "/^cfg_dir=/etc/nagios/objects/d" ${BUILD_DIR}/nagios/etc/nagios.cfg
 }
 
 install_check_samana() {
@@ -220,7 +225,7 @@ case $1 in
     install_prereqs
     install_pywinrm
     install_nagios
-    install_pnp4nagios
+    install_graphios
     install_check_samana
     install_mibs
     install_pynag

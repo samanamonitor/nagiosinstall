@@ -163,7 +163,7 @@ install_graphios() {
     mv /etc/graphios/graphios.cfg ${BUILD_DIR}/nagios/etc/graphios
     chown nagios.nagios ${BUILD_DIR}/nagios/etc/graphios
     ln -s ${BUILD_DIR}/nagios/etc/graphios/graphios.cfg /etc/graphios
-    sed -i "/^cfg_dir=/etc/nagios/objects/d" ${BUILD_DIR}/nagios/etc/nagios.cfg
+    sed -i "/^cfg_dir=/etc/nagios/objects$/d" ${BUILD_DIR}/nagios/etc/nagios.cfg
 }
 
 install_check_samana() {

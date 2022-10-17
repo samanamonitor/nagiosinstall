@@ -217,7 +217,8 @@ if [ "$new" == "1" ]; then
     NAGIOS_CFG=/usr/local/nagios/etc/nagios.cfg
     GRAPHIOS_SPOOL=/usr/local/nagios/var/spool/graphios
     mkdir -p ${GRAPHIOS_SPOOL}
-    sed -i "/^cfg_dir=\/etc\/nagios\/objects/d" ${NAGIOS_CFG}
+    chown nagios.nagios ${GRAPHIOS_SPOOL}
+    sed -i "/^cfg_dir=\/etc\/nagios\/objects$/d" ${NAGIOS_CFG}
     set-key ${NAGIOS_CFG} process_performance_data 1
     set-key ${NAGIOS_CFG} service_perfdata_file ${GRAPHIOS_SPOOL}/service-perfdata
     set-key ${NAGIOS_CFG} service_perfdata_file_template DATATYPE::SERVICEPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tSERVICEDESC::\$SERVICEDESC\$\\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tSERVICESTATE::\$SERVICESTATE\$\\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\\tGRAPHITEPREFIX::samm\\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$

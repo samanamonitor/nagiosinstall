@@ -61,6 +61,7 @@ build_nagios() {
         https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/SAMM.png
     wget -O ${BUILD_DIR}/nagios/share/images/favicon.ico \
         https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/favicon.ico
+    cp ${BUILD_DIR}/nagios/share/images/favicon.ico /var/www/html
     sed -i "s/^#enable_page_tour=1/enable_page_tour=0/" ${BUILD_DIR}/nagios/etc/cgi.cfg
 }
 
@@ -100,7 +101,8 @@ build_nagiosinstall() {
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
     install -d -o root -g root ${BUILD_DIR}/snmp/mibs
-    install -o root -g root support/mibs/* ${BUILD_DIR}/snmp/mibs
+    install -o root -g root ${DIR}/support/mibs/* ${BUILD_DIR}/snmp/mibs
+    install -o root -g root ${DIR}/support/www/* /var/www/html
 }
 
 build_tarball() {
@@ -144,6 +146,8 @@ install_nagios() {
     a2ensite nagios
     a2enmod rewrite
     a2enmod cgi
+    a2enmod proxy
+    a2enmod proxy_http
     htpasswd -b -c ${BUILD_DIR}/nagios/etc/htpasswd.users nagiosadmin "${SAMM_PWD}"
     chown nagios.nagios ${BUILD_DIR}/nagios/etc/htpasswd.users
     chmod 0640 ${BUILD_DIR}/nagios/etc/htpasswd.users
@@ -154,6 +158,7 @@ install_nagios() {
         /etc/ssl/openssl.cnf
     ln -s /usr/bin/python2 /usr/bin/python
     pip2 install -t /usr/local/nagios/libexec/lib urllib3
+
 }
 
 install_graphios() {

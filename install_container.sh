@@ -154,6 +154,7 @@ if [ -z "${GRAPHITE_ID}" ]; then
          --name graphite \
          --restart=always \
          --mount source=graphite,target=/opt/graphite \
+         --env GRAPHITE_URL_ROOT=graphite \
          -p 8080:80 \
          -p 2003-2004:2003-2004 \
          -p 2023-2024:2023-2024 \
@@ -243,7 +244,7 @@ if [ "$new" == "1" ]; then
     set-key ${GRAPHIOS_CFG} sleep_time  15
     set-key ${GRAPHIOS_CFG} sleep_max  480
     set-key ${GRAPHIOS_CFG} test_mode  False
-    set-key ${GRAPHIOS_CFG} use_service_desc  False
+    set-key ${GRAPHIOS_CFG} use_service_desc  True
     set-key ${GRAPHIOS_CFG} replace_hostname  True
     set-key ${GRAPHIOS_CFG} reverse_hostname  False
     set-key ${GRAPHIOS_CFG} enable_carbon  True
@@ -255,6 +256,12 @@ if [ "$new" == "1" ]; then
     set-key ${GRAPHIOS_CFG} librato_whitelist  [".*"]
     set-key ${GRAPHIOS_CFG} enable_stdout  False
     set-key ${GRAPHIOS_CFG} nerf_stdout  True
+
+    cat <<EOF > /usr/local/apache2/etc/conf-available/graphite.conf
+ProxyPass "/graphite" "http://${NAGIOS_IP}:8080/graphite"
+ProxyPassReverse "/graphite" "http://${NAGIOS_IP}:8080/graphite"
+EOF
+    a2enconf graphite
 fi
 cd /usr/src
 if [ ! -d /usr/src/check_samana ]; then

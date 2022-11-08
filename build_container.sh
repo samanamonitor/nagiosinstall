@@ -49,18 +49,28 @@ build_nagios() {
     make install-config
     make install-commandmode
     install -d -o root -g root ${BUILD_DIR}/apache2/sites-available/
+    install -d -o root -g root ${BUILD_DIR}/apache2/conf-available/
     make install-webconf
     echo "RedirectMatch ^/$ /samm/" >> ${BUILD_DIR}/apache2/sites-available/nagios.conf
+    cat <<EOF > ${BUILD_DIR}/apache2/conf-available/graphite.conf
+ProxyPass "/graphite" "http://%NAGIOS_IP%:8080/graphite"
+ProxyPassReverse "/graphite" "http://%NAGIOS_IP%:8080/graphite"
+EOF
     cp -R contrib/eventhandlers/ ${BUILD_DIR}/nagios/libexec/
     install -o root -g root -m 0664 ${DIR}/nagiosweb/index.php ${BUILD_DIR}/nagios/share
     install -o root -g root -m 0664 ${DIR}/nagiosweb/main.php ${BUILD_DIR}/nagios/share
     install -o root -g root -m 0664 ${DIR}/nagiosweb/side.php ${BUILD_DIR}/nagios/share
+    install -o root -g root -m 0664 ${DIR}/nagiosweb/graph.html ${BUILD_DIR}/nagios/share
+    install -o nagios -g nagios -m 0775 ${DIR}/nagiosweb/wsgi/rdp.py ${BUILD_DIR}/nagios/sbin
+    install -o root -g root -m 0664 ${DIR}/nagiosweb/wsgi/rdp.conf ${BUILD_DIR}/apache2/conf-available
     wget -O ${BUILD_DIR}/nagios/share/images/SamanaGroup.png \
         https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/SamanaGroup.png
     wget -O ${BUILD_DIR}/nagios/share/images/SAMM.png \
         https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/SAMM.png
     wget -O ${BUILD_DIR}/nagios/share/images/favicon.ico \
         https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/favicon.ico
+    wget -O ${BUILD_DIR}/nagios/share/images/notes.gif \
+        https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/notes.gif
     cp ${BUILD_DIR}/nagios/share/images/favicon.ico /var/www/html
     sed -i "s/^#enable_page_tour=1/enable_page_tour=0/" ${BUILD_DIR}/nagios/etc/cgi.cfg
 }
@@ -87,7 +97,6 @@ build_nagios_plugins() {
         --prefix=${BUILD_DIR}/nagios
     make
     make install
-    install -d -o root -g root ${BUILD_DIR}/apache2/sites-available/
     RABBIT_TEMP=$(mktemp -d)
     cd ${RABBIT_TEMP}
     git clone https://github.com/nagios-plugins-rabbitmq/nagios-plugins-rabbitmq
@@ -102,7 +111,6 @@ build_nagiosinstall() {
     usermod -a -G nagios,nagcmd www-data
     install -d -o root -g root ${BUILD_DIR}/snmp/mibs
     install -o root -g root ${DIR}/support/mibs/* ${BUILD_DIR}/snmp/mibs
-    install -o root -g root ${DIR}/support/www/* /var/www/html
 }
 
 build_tarball() {
@@ -142,12 +150,16 @@ install_nagios() {
         exit 1
     fi
     mv ${BUILD_DIR}/apache2/sites-available/nagios.conf /etc/apache2/sites-available
+    mv ${BUILD_DIR}/apache2/conf-available/graphite.conf /etc/apache2/conf-available
+    mv ${BUILD_DIR}/apache2/conf-available/rdp.conf /etc/apache2/conf-available
     /usr/bin/install -c -m 755 -o root -g root /usr/local/nagios/etc/init.d/nagios /etc/init.d/
     a2ensite nagios
     a2enmod rewrite
     a2enmod cgi
     a2enmod proxy
     a2enmod proxy_http
+    a2enconf graphite
+    a2enconf rdp
     htpasswd -b -c ${BUILD_DIR}/nagios/etc/htpasswd.users nagiosadmin "${SAMM_PWD}"
     chown nagios.nagios ${BUILD_DIR}/nagios/etc/htpasswd.users
     chmod 0640 ${BUILD_DIR}/nagios/etc/htpasswd.users

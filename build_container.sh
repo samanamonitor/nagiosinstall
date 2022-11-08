@@ -9,7 +9,7 @@ set -xe
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ ! -f $DIR/build_config.dat ]; then
-    echo "Configuration file not found. Use config.dat.example as a base"
+    echo "Configuration file not found. Use build_config.dat.example as a base"
     exit 1
 fi
 

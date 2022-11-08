@@ -121,11 +121,13 @@ add-local-volume etcd_data /usr/local/etcd/var
 add-local-volume snmp_mibs /usr/local/snmp/mibs
 add-local-volume graphite /usr/local/graphite
 
+chmod o+x /var/lib/docker
 chmod o+x /var/lib/docker/volumes
 
 SM_ID=$(docker ps -f name=sm -q)
 if [ "$SM_ID" == "" ]; then
     docker run -p 80:80 -p 443:443 \
+        --restart=always \
         --mount source=nagios,target=/usr/local/nagios \
         --mount source=ssmtp_etc,target=/etc/ssmtp \
         --mount source=apache_etc,target=/etc/apache2 \
@@ -162,6 +164,9 @@ if [ -z "${GRAPHITE_ID}" ]; then
          -p 8126:8126 \
          graphiteapp/graphite-statsd
 fi
+GRAPH_CONF=$(docker inspect graphite \
+    | jq -r '.[0].Mounts[] | select(.Destination == "/opt/graphite/conf").Source')
+${DIR}/editini.py ${GRAPH_CONF} set default_average xfilesfactor 0
 
 if [ "$new" == "1" ]; then
     docker exec -it sm htpasswd -b \
@@ -179,7 +184,7 @@ if [ "$new" == "1" ]; then
     echo "# WMI user's password" >> ${NAGIOS_REC}
     set-key ${NAGIOS_REC} \$USER8\$ ${NAGIOS_WMI_PASSWORD}
     echo "# Path with authentication credentials for scripts" >> ${NAGIOS_REC}
-    set-key ${NAGIOS_REC} \$USER9\$ /etc/nagios/samananagios.pw
+    set-key ${NAGIOS_REC} \$USER9\$ /usr/local/nagios/etc/samananagios.pw
     echo "# Powershell script for citrix xa/xd monitoring" >> ${NAGIOS_REC}
     set-key ${NAGIOS_REC} \$USER11\$ http://$NAGIOS_IP/samanamonctx.ps1
     echo "# Powershell script for windows monitoring (legacy)" >> ${NAGIOS_REC}
@@ -222,12 +227,12 @@ if [ "$new" == "1" ]; then
     sed -i "/^cfg_dir=\/etc\/nagios\/objects$/d" ${NAGIOS_CFG}
     set-key ${NAGIOS_CFG} process_performance_data 1
     set-key ${NAGIOS_CFG} service_perfdata_file ${GRAPHIOS_SPOOL}/service-perfdata
-    set-key ${NAGIOS_CFG} service_perfdata_file_template DATATYPE::SERVICEPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tSERVICEDESC::\$SERVICEDESC\$\\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tSERVICESTATE::\$SERVICESTATE\$\\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\\tGRAPHITEPREFIX::samm\\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
+    set-key ${NAGIOS_CFG} service_perfdata_file_template DATATYPE::SERVICEPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tSERVICEDESC::\$SERVICEDESC\$\\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::$HOSTSTATETYPE\$\\tSERVICESTATE::$SERVICESTATE\$\\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\\tGRAPHITEPREFIX::\$_SERVICEGRAPHITEPREFIX\$\\tGRAPHITEPOSTFIX::\$_SERVICEGRAPHITEPOSTFIX\$
     set-key ${NAGIOS_CFG} service_perfdata_file_mode a
     set-key ${NAGIOS_CFG} service_perfdata_file_processing_interval 15
     set-key ${NAGIOS_CFG} service_perfdata_file_processing_command process-service-perfdata-file-graphios
     set-key ${NAGIOS_CFG} host_perfdata_file ${GRAPHIOS_SPOOL}/host-perfdata
-    set-key ${NAGIOS_CFG} host_perfdata_file_template DATATYPE::HOSTPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tHOSTPERFDATA::\$HOSTPERFDATA\$\\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tGRAPHITEPREFIX::samm\\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
+    set-key ${NAGIOS_CFG} host_perfdata_file_template DATATYPE::HOSTPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tHOSTPERFDATA::\$HOSTPERFDATA\$\\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tGRAPHITEPREFIX::\$_HOSTGRAPHITEPREFIX\$\\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
     set-key ${NAGIOS_CFG} host_perfdata_file_mode a
     set-key ${NAGIOS_CFG} host_perfdata_file_processing_interval 15
     set-key ${NAGIOS_CFG} host_perfdata_file_processing_command process-host-perfdata-file-graphios
@@ -257,11 +262,9 @@ if [ "$new" == "1" ]; then
     set-key ${GRAPHIOS_CFG} enable_stdout  False
     set-key ${GRAPHIOS_CFG} nerf_stdout  True
 
-    cat <<EOF > /usr/local/apache2/etc/conf-available/graphite.conf
-ProxyPass "/graphite" "http://${NAGIOS_IP}:8080/graphite"
-ProxyPassReverse "/graphite" "http://${NAGIOS_IP}:8080/graphite"
-EOF
-    a2enconf graphite
+    sed -i -e "s/%NAGIOS_IP%/${NAGIOS_IP}/" /usr/local/apache2/etc/conf-available/graphite.conf
+    sed -i -e '/service_description\s\+SSH/a\    register        0' \
+        /usr/local/nagios/etc/objects/localhost.cfg
 fi
 cd /usr/src
 if [ ! -d /usr/src/check_samana ]; then

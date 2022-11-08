@@ -18,7 +18,7 @@ SAMM_PWD=set-password
 DIST=ubuntu
 
 # Set image URL to download tarball and image name
-IMAGE_URL="https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/nagiosinstall.tar.gz" # s3 url to samanamonitor.tgz image
+IMAGE_URL="https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/samanamon_v2.0.tar.gz" # s3 url to samanamonitor.tgz image
 IMAGE=samanamon:v2.0
 
 # Set SNMP community for monitoring components

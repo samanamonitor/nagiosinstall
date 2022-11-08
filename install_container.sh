@@ -3,6 +3,12 @@
 set -xe
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+IPR2VER=5.5
+
+isip() {
+    echo "$1" | grep -qE "^([0-9]+\.){3}[0-9]+$"
+    return $?
+}
 
 if [ ! -f $DIR/config.dat ]; then
     echo "Configuration file not found. Use config.dat.example as a base"
@@ -33,9 +39,25 @@ fi
 
 NAGIOS_IP=$1
 
-if [ -z "$NAGIOS_IP" ]; then
-    echo "Usage: $0 <ip address>"
-    exit 1
+if ! isip "$NAGIOS_IP"; then
+    ipver=$(dpkg -s iproute2 | sed -n "s/^Version: //p")
+    if [ "$ipver" == "$(echo -e "$ipver\n${IPR2VER}" | sort -V | head -n1)" ]; then
+        echo "Usage: $0 <ip address/iface name>"
+        exit 1
+    fi
+    set +e
+    ipdata=$(ip --json addr show ${NAGIOS_IP} 2>/dev/null)
+    if [ "$?" != "0" ]; then
+        echo "Invalid interface ${NAGIOS_IP}"
+        exit 1
+    fi
+    ip=$(echo ${ipdata} | jq -r ".[0].addr_info[] | select(.family == \"inet\").local" 2>/dev/null)
+    if [ "$?" != "0" ] || ! isip $ip; then
+        echo "Invalid data from interface ${NAGIOS_IP}. ${ipdata}"
+        exit 1
+    fi
+    NAGIOS_IP=${ip}
+    set -e
 fi
 
 if ! which docker; then

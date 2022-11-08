@@ -1,0 +1,61 @@
+<html>
+<head>
+    <title>Samana Mon Graph</title>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+    <link rel="shortcut icon" href="images/favicon.ico" type="image/ico">
+</head>
+<body>
+    <script language="javascript">
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        host = urlParams.get('host');
+        service = urlParams.get('service');
+        baseurl="/graphite/render/?";
+        function generate_graph(host, service, from, title) {
+            params = {
+                width: 600,
+                height: 350,
+                margin: '',
+                graphOnly: false,
+                from: from,
+                tz: 'America/New_York',
+                yMax: 100,
+                yMin: 0,
+                connectedLimit: '',
+                lineMode: 'connected',
+                title: title
+            };
+            host = host.replaceAll(' ', '');
+            if(service == null || service == '') {
+                params['showTarget'] = host + ".*";
+                params['target'] = host + ".*";
+            } else {
+                service = service.replaceAll(' ', '');
+                params['showTarget']= host + '.' + service + '.*';
+                params['target']= host + '.' + service + '.*';
+            }
+            return params;
+        }
+        $(document).ready(function() {
+            title = host + (service==null?'':' - ' + service) + ' - last 2 hours';
+            $(".graph2hours").append($("<img>", {src: baseurl + $.param(
+                generate_graph(host, service, '-2hours', title))}));
+            title = host + (service==null?'':' - ' + service) + ' - last 24 hours';
+            $(".graph24hours").append($("<img>", {src: baseurl + $.param(generate_graph(host, service, '-24hours', title))}));
+            title = host + (service==null?'':' - ' + service) + ' - last 7 days';
+            $(".graph7days").append($("<img>", {src: baseurl + $.param(generate_graph(host, service, '-7days', title))}));
+            title = host + (service==null?'':' - ' + service) + ' - last 30 days';
+            $(".graph30days").append($("<img>", {src: baseurl + $.param(generate_graph(host, service, '-30days', title))}));
+
+            setTimeout(function() {
+                location.reload();
+            }, 300000)
+        })
+
+    </script>
+    <div class="graph2hours"></div>
+    <div class="graph24hours"></div>
+    <div class="graph7days"></div>
+    <div class="graph30days"></div>
+</body>
+</html>

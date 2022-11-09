@@ -5,6 +5,12 @@ set -xe
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 IPR2VER=5.5
 
+USERID=$(id -u)
+if [ "${USERID}" != "0" ]; then
+    echo "Please run using sudo or as root"
+    exit 1
+fi
+
 isip() {
     echo "$1" | grep -qE "^([0-9]+\.){3}[0-9]+$"
     return $?

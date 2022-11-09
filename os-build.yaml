@@ -79,6 +79,7 @@ packages:
    - docker-ce-cli
    - containerd.io
    - jq
+   - unzip
 write_files:
    - content: |
       {
@@ -86,30 +87,20 @@ write_files:
       }
      path: /etc/docker/daemon.json
    - content: |
-      CONFIG_TYPE=install
-      NAGIOS_UID=5001
-      NAGIOS_GID=5001
-      NAGCMD_GID=5002
-      SAMM_USER=nagiosadmin
-      SAMM_PWD=Samana81.
-      DIST=ubuntu
-      IMAGE_URL="https://s3.us-west-2.amazonaws.com/monitor.samanagroup.co/samanamon_v2.0.tar.gz"
-      IMAGE=samanamon:v2.0
-      NAGIOS_SNMP_COMMUNITY=
-      NAGIOS_NETBIOS_DOMAIN=samana
-      NAGIOS_FQDN_DOMAIN=
-      NAGIOS_WMI_USER=samanasvc
-      NAGIOS_WMI_PASSWORD=C1tr1xAdm1n
-      NAGIOS_HOSTNAME=
-      NAGIOS_EMAIL=
-      NAGIOS_SMTP_SERVER=
-      NAGIOS_SMTP_USER=
-      NAGIOS_SMTP_PASSWORD=
-      SLACK_DOMAIN=
-      SLACK_TOKEN=
-      REGISTRY=gcr.io/etcd-development/etcd
-     path: /tmp/config.dat
+      [default]
+      aws_access_key_id = AKIAIHAXLNVDTW4JQ6ZQ
+      aws_secret_access_key = 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
+     path: /home/ubuntu/.aws/credentials
+   - content: |
+      [default]
+      output = json
+      region = us-east-1
+     path: /home/ubuntu/.aws/config
 runcmd:
+   - [ curl, "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip", -o, "/tmp/awscliv2.zip" ]
+   - [ unzip, /tmp/awscliv2.zip, -d, /tmp/awscliv2 ]
+   - [ /tmp/awscliv2/aws/install ]
+   - [ mkdir, -p, /usr/src/sources ]
    - [ wget, -O, /tmp/install_container.sh, "https://raw.githubusercontent.com/samanamonitor/nagiosinstall/master/install_container.sh" ]
    - [ /bin/bash, /tmp/install_container.sh, ens3 ]
    - [ /usr/sbin/usermod, -a ,-G, docker,nagios, ubuntu ]

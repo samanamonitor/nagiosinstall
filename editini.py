@@ -1,8 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
-import ConfigParser
-config = ConfigParser.RawConfigParser()
+import iniparse
+config = iniparse.RawConfigParser()
 
 def usage():
     print("USAGE: %s <filename> <set/get> <section> <option> [<value>]" % sys.argv[0])

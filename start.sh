@@ -2,7 +2,7 @@
 
 RETRIES=2
 
-rm /run/nagios.lock /run/apache2/apache2.pid /run/sammworker_process.pid
+rm -f /run/nagios.lock /run/apache2/apache2.pid /run/sammworker_process.pid
 r=$RETRIES
 while [ $r -gt 0 ]; do
     service nagios start

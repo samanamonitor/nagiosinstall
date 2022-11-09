@@ -13,7 +13,7 @@ while [ $r -gt 0 ]; do
         echo "Retrying Nagios..."
         r=$(( $r - 1 ))
     fi
-    if [ "$r" == "0" ]
+    if [ "$r" == "0" ]; then
         echo "Nagios didn't start. Abort" >&2
         exit 1
     fi
@@ -29,7 +29,7 @@ while [ $r -gt 0 ]; do
         echo "Retrying Apache..."
         r=$(( $r - 1 ))
     fi
-    if [ "$r" == "0" ]
+    if [ "$r" == "0" ]; then
         echo "Apache didn't start. Abort" >&2
         exit 1
     fi

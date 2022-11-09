@@ -169,7 +169,7 @@ install_nagios() {
         -e '/\[default_sect\]/a activate = 1\n\n[legacy_sect]\nactivate = 1\n' \
         /etc/ssl/openssl.cnf
     ln -s /usr/bin/python2 /usr/bin/python
-    pip2 install -t /usr/local/nagios/libexec/lib urllib3
+    #pip2 install -t /usr/local/nagios/libexec/lib urllib3
 
 }
 

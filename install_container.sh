@@ -194,7 +194,7 @@ if [ -z "${GRAPHITE_ID}" ]; then
 fi
 GRAPH_CONF=$(docker inspect graphite \
     | jq -r '.[0].Mounts[] | select(.Destination == "/opt/graphite/conf").Source')
-${DIR}/editini.py ${GRAPH_CONF} set default_average xfilesfactor 0
+${DIR}/editini.py ${GRAPH_CONF}/storage-aggregation.conf set default_average xfilesfactor 0
 
 if [ "$new" == "1" ]; then
     docker exec -it sm htpasswd -b \

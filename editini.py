@@ -20,7 +20,9 @@ if (action == 'set' and len(sys.argv) != 6) or \
 section = sys.argv[3]
 option = sys.argv[4]
 value = sys.argv[5]
-with open(filename, "r+") as f:
+with open(filename, "r") as f:
     config.readfp(f)
+
+with open(filename, "w") as f:
     config.set(section, option, value)
     config.write(f)

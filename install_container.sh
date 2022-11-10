@@ -255,12 +255,12 @@ if [ "$new" == "1" ]; then
     sed -i "/^cfg_dir=\/etc\/nagios\/objects$/d" ${NAGIOS_CFG}
     set-key ${NAGIOS_CFG} process_performance_data 1
     set-key ${NAGIOS_CFG} service_perfdata_file ${GRAPHIOS_SPOOL}/service-perfdata
-    set-key ${NAGIOS_CFG} service_perfdata_file_template DATATYPE::SERVICEPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tSERVICEDESC::\$SERVICEDESC\$\\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::$HOSTSTATETYPE\$\\tSERVICESTATE::$SERVICESTATE\$\\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\\tGRAPHITEPREFIX::\$_SERVICEGRAPHITEPREFIX\$\\tGRAPHITEPOSTFIX::\$_SERVICEGRAPHITEPOSTFIX\$
+    set-key ${NAGIOS_CFG} service_perfdata_file_template DATATYPE::SERVICEPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tSERVICEDESC::\$SERVICEDESC\$\\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tSERVICESTATE::\$SERVICESTATE\$\\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\\tGRAPHITEPREFIX::\\tGRAPHITEPOSTFIX::
     set-key ${NAGIOS_CFG} service_perfdata_file_mode a
     set-key ${NAGIOS_CFG} service_perfdata_file_processing_interval 15
     set-key ${NAGIOS_CFG} service_perfdata_file_processing_command process-service-perfdata-file-graphios
     set-key ${NAGIOS_CFG} host_perfdata_file ${GRAPHIOS_SPOOL}/host-perfdata
-    set-key ${NAGIOS_CFG} host_perfdata_file_template DATATYPE::HOSTPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tHOSTPERFDATA::\$HOSTPERFDATA\$\\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tGRAPHITEPREFIX::\$_HOSTGRAPHITEPREFIX\$\\tGRAPHITEPOSTFIX::\$_HOSTGRAPHITEPOSTFIX\$
+    set-key ${NAGIOS_CFG} host_perfdata_file_template DATATYPE::HOSTPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tHOSTPERFDATA::\$HOSTPERFDATA\$\\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tGRAPHITEPREFIX::\\tGRAPHITEPOSTFIX::
     set-key ${NAGIOS_CFG} host_perfdata_file_mode a
     set-key ${NAGIOS_CFG} host_perfdata_file_processing_interval 15
     set-key ${NAGIOS_CFG} host_perfdata_file_processing_command process-host-perfdata-file-graphios

@@ -25,7 +25,6 @@ IMAGE=samanamon:v2.0
 NAGIOS_SNMP_COMMUNITY=
 # Set NETBIOS and FQDN Domain name
 NAGIOS_NETBIOS_DOMAIN=
-NAGIOS_FQDN_DOMAIN=
 # If needed, set WMI username and password (username is expected as SAMAccountName)
 NAGIOS_WMI_USER=
 NAGIOS_WMI_PASSWORD=
@@ -43,3 +42,4 @@ SLACK_DOMAIN=
 SLACK_TOKEN=
 # Source for ETCD docker image (do not change unless you know what you are doing)
 REGISTRY=gcr.io/etcd-development/etcd
+ETCDVERSION=v3.5.6

@@ -16,6 +16,11 @@ isip() {
     return $?
 }
 
+if ! which crudini >/dev/null; then
+    echo "CRUDINI is necessary for this script."
+    exit 1
+fi
+
 if [ ! -f $DIR/config.dat ]; then
     echo "Configuration file not found. Use config.dat.example as a base"
     exit 1
@@ -170,7 +175,7 @@ if [ "$ETCD_ID" == "" ]; then
     docker run -d -p 2379:2379 \
         --restart=always \
         --volume etcd_data:/etcd-data \
-        --name etcd ${REGISTRY}:latest \
+        --name etcd ${REGISTRY}:${ETCDVERSION} \
         /usr/local/bin/etcd --data-dir /etcd-data --name node0 \
         --advertise-client-urls http://${NAGIOS_IP}:2379,http://localhost:2379 \
         --listen-client-urls http://0.0.0.0:2379 --max-snapshots 2 \
@@ -194,9 +199,12 @@ if [ -z "${GRAPHITE_ID}" ]; then
 fi
 GRAPH_CONF=$(docker inspect graphite \
     | jq -r '.[0].Mounts[] | select(.Destination == "/opt/graphite/conf").Source')
-${DIR}/editini.py ${GRAPH_CONF}/storage-aggregation.conf set default_average xfilesfactor 0
+crudini --set ${GRAPH_CONF}/storage-aggregation.conf default_average xfilesfactor 0
 
 if [ "$new" == "1" ]; then
+
+    # TODO: upgrade from SAMM V1 and the volumes
+    # TODO: change nagios admin with user in config.dat from cgi.cfg
     docker exec -it sm htpasswd -b \
         -c /usr/local/nagios/etc/htpasswd.users "${SAMM_USER}" "${SAMM_PWD}"
 
@@ -267,30 +275,30 @@ if [ "$new" == "1" ]; then
     set +e
 
     GRAPHIOS_CFG=/usr/local/nagios/etc/graphios/graphios.cfg
-    echo "[graphios]" > ${GRAPHIOS_CFG}
-    set-key ${GRAPHIOS_CFG} replacement_character  _
-    set-key ${GRAPHIOS_CFG} spool_directory  ${GRAPHIOS_SPOOL}
-    set-key ${GRAPHIOS_CFG} log_file  /usr/local/nagios/var/graphios.log
-    set-key ${GRAPHIOS_CFG} log_max_size  25165824
-    set-key ${GRAPHIOS_CFG} log_level  logging.INFO
-    set-key ${GRAPHIOS_CFG} debug  False
-    set-key ${GRAPHIOS_CFG} sleep_time  15
-    set-key ${GRAPHIOS_CFG} sleep_max  480
-    set-key ${GRAPHIOS_CFG} test_mode  False
-    set-key ${GRAPHIOS_CFG} use_service_desc  True
-    set-key ${GRAPHIOS_CFG} replace_hostname  True
-    set-key ${GRAPHIOS_CFG} reverse_hostname  False
-    set-key ${GRAPHIOS_CFG} enable_carbon  True
-    set-key ${GRAPHIOS_CFG} carbon_plaintext  False
-    set-key ${GRAPHIOS_CFG} carbon_servers  $NAGIOS_IP:2004
-    set-key ${GRAPHIOS_CFG} enable_statsd  False
-    set-key ${GRAPHIOS_CFG} statsd_server  127.0.0.1:8125
-    set-key ${GRAPHIOS_CFG} enable_librato  False
-    set-key ${GRAPHIOS_CFG} librato_whitelist  [".*"]
-    set-key ${GRAPHIOS_CFG} enable_stdout  False
-    set-key ${GRAPHIOS_CFG} nerf_stdout  True
+    crudini --set ${GRAPHIOS_CFG} graphios replacement_character  _
+    crudini --set ${GRAPHIOS_CFG} graphios spool_directory  ${GRAPHIOS_SPOOL}
+    crudini --set ${GRAPHIOS_CFG} graphios log_file  /usr/local/nagios/var/graphios.log
+    crudini --set ${GRAPHIOS_CFG} graphios log_max_size  25165824
+    crudini --set ${GRAPHIOS_CFG} graphios log_level  logging.INFO
+    crudini --set ${GRAPHIOS_CFG} graphios debug  False
+    crudini --set ${GRAPHIOS_CFG} graphios sleep_time  15
+    crudini --set ${GRAPHIOS_CFG} graphios sleep_max  480
+    crudini --set ${GRAPHIOS_CFG} graphios test_mode  False
+    crudini --set ${GRAPHIOS_CFG} graphios use_service_desc  True
+    crudini --set ${GRAPHIOS_CFG} graphios replace_hostname  True
+    crudini --set ${GRAPHIOS_CFG} graphios reverse_hostname  False
+    crudini --set ${GRAPHIOS_CFG} graphios enable_carbon  True
+    crudini --set ${GRAPHIOS_CFG} graphios carbon_plaintext  False
+    crudini --set ${GRAPHIOS_CFG} graphios carbon_servers  $NAGIOS_IP:2004
+    crudini --set ${GRAPHIOS_CFG} graphios enable_statsd  False
+    crudini --set ${GRAPHIOS_CFG} graphios statsd_server  127.0.0.1:8125
+    crudini --set ${GRAPHIOS_CFG} graphios enable_librato  False
+    crudini --set ${GRAPHIOS_CFG} graphios librato_whitelist  [".*"]
+    crudini --set ${GRAPHIOS_CFG} graphios enable_stdout  False
+    crudini --set ${GRAPHIOS_CFG} graphios nerf_stdout  True
 
-    sed -i -e "s/%NAGIOS_IP%/${NAGIOS_IP}/" /usr/local/apache2/etc/conf-available/graphite.conf
+    sed -i -e "s/%NAGIOS_IP%/${NAGIOS_IP}/" \
+        /usr/local/apache2/etc/conf-available/graphite.conf
     sed -i -e '/service_description\s\+SSH/a\    register        0' \
         /usr/local/nagios/etc/objects/localhost.cfg
 fi

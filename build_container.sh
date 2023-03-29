@@ -75,12 +75,14 @@ EOF
     sed -i "s/^#enable_page_tour=1/enable_page_tour=0/" ${BUILD_DIR}/nagios/etc/cgi.cfg
 }
 
+# also needed for compiling from git:
 ##############Configure nagios pluginss################
 build_nagios_plugins() {
     local TEMPDIR=$(mktemp -d)
-    LIBS="libldap2-dev libkrb5-dev libssl-dev iputils-ping smbclient snmp \
-        libdbi-dev libmysqlclient-dev libpq-dev dnsutils fping libnet-snmp-perl \
-        libcrypt-x509-perl libdatetime-format-dateparse-perl libtext-glob-perl \
+    LIBS="m4 gettext automake autoconf make gcc libldap2-dev libkrb5-dev \
+        libssl-dev iputils-ping smbclient snmp libdbi-dev libmysqlclient-dev \
+        libpq-dev dnsutils fping libnet-snmp-perl libcrypt-x509-perl \
+        libdatetime-format-dateparse-perl libtext-glob-perl \
         libwww-perl ssh-client" # removed libfreeradius-client-dev for bionic
     apt install -y $LIBS
     groupadd -g ${NAGIOS_GID} nagios
@@ -88,19 +90,45 @@ build_nagios_plugins() {
     useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
     usermod -a -G nagcmd nagios
     usermod -a -G nagios,nagcmd www-data
-    wget -O ${TEMPDIR}/nagios-plugins.tar.gz ${NAGIOS_PLUGINS_URL}
-    mkdir -p ${TEMPDIR}/nagios-plugins
+    mkdir -p ${TEMPDIR}
     cd ${TEMPDIR}
-    tar --strip-components=1 -C nagios-plugins -zxvf nagios-plugins.tar.gz
+    git clone --branch release-2.4.3 https://github.com/nagios-plugins/nagios-plugins.git
+    #wget -O ${TEMPDIR}/nagios-plugins.tar.gz ${NAGIOS_PLUGINS_URL}
+    #tar --strip-components=1 -C nagios-plugins -zxvf nagios-plugins.tar.gz
     cd nagios-plugins
+    ./tools/setup
     ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd --enable-perl-modules \
-        --prefix=${BUILD_DIR}/nagios
+        --prefix=${BUILD_DIR}/nagios --with-cgiurl=/samm/cgi-bin
     make
     make install
     RABBIT_TEMP=$(mktemp -d)
     cd ${RABBIT_TEMP}
     git clone https://github.com/nagios-plugins-rabbitmq/nagios-plugins-rabbitmq
     install -o root -g root ${RABBIT_TEMP}/nagios-plugins-rabbitmq/scripts/* ${BUILD_DIR}/nagios/libexec
+}
+
+build_pnp4nagios() {
+    local TEMPDIR=$(mktemp -d)
+    LIBS="rrdtool librrdtool-oo-perl php-xml"
+    apt install -y $LIBS
+    groupadd -g ${NAGIOS_GID} nagios
+    groupadd -g ${NAGCMD_GID} nagcmd
+    useradd -M -u ${NAGIOS_UID} -g ${NAGIOS_GID} nagios
+    usermod -a -G nagcmd nagios
+    usermod -a -G nagios,nagcmd www-data
+    wget -O ${TEMPDIR}/pnp4nagios.latest.tar.gz ${PNP4NAGIOS_URL}
+    mkdir -p ${TEMPDIR}/pnp4nagios
+    cd ${TEMPDIR}
+    tar --strip-components=1 -C pnp4nagios -zxvf pnp4nagios.latest.tar.gz
+    cd pnp4nagios
+    ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd  \
+        --with-httpd-conf=${BUILD_DIR}/apache2/sites-available \
+        --prefix=${BUILD_DIR}/pnp4nagios
+    make all
+    make fullinstall
+
+    mv ${BUILD_DIR}/pnp4nagios/share/install.php ${BUILD_DIR}/pnp4nagios/share/install-old.php
+    patch ${BUILD_DIR}/pnp4nagios/share/application/models/data.php $DIR/pnp4nagios.patch
 }
 
 build_nagiosinstall() {

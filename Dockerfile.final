@@ -1,0 +1,9 @@
+ARG UBUNTU_VERSION
+FROM ubuntu:${UBUNTU_VERSION}
+ENV DEBIAN_FRONTEND=noninteractive
+ARG UBUNTU_VERSION=${UBUNTU_VERSION}
+COPY start.sh /
+COPY finalize-image.sh /
+RUN /finalize-image.sh
+RUN rm /finalize-image.sh
+ENTRYPOINT [ "/start.sh" ]

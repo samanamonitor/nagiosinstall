@@ -16,8 +16,13 @@ isip() {
     return $?
 }
 
-if ! which crudini >/dev/null; then
-    echo "CRUDINI is necessary for this script."
+#if ! which crudini >/dev/null; then
+#    echo "CRUDINI is necessary for this script."
+#    exit 1
+#fi
+
+if ! which jq >/dev/null 2>&1; then
+    echo "'jq' is necessary for this script." >&2
     exit 1
 fi
 
@@ -48,26 +53,26 @@ if [ -z "${SAMM_PWD}" ] || [ "${SAMM_PWD}" == "set-password" ]; then
     exit 1
 fi
 
-NAGIOS_IP=$1
+SAMM_IP=$1
 
-if ! isip "$NAGIOS_IP"; then
+if ! isip "$SAMM_IP"; then
     ipver=$(dpkg -s iproute2 | sed -n "s/^Version: //p")
     if [ "$ipver" == "$(echo -e "$ipver\n${IPR2VER}" | sort -V | head -n1)" ]; then
         echo "Usage: $0 <ip address/iface name>"
         exit 1
     fi
     set +e
-    ipdata=$(ip --json addr show ${NAGIOS_IP} 2>/dev/null)
+    ipdata=$(ip --json addr show ${SAMM_IP} 2>/dev/null)
     if [ "$?" != "0" ]; then
-        echo "Invalid interface ${NAGIOS_IP}"
+        echo "Invalid interface ${SAMM_IP}"
         exit 1
     fi
     ip=$(echo ${ipdata} | jq -r ".[0].addr_info[] | select(.family == \"inet\").local" 2>/dev/null)
     if [ "$?" != "0" ] || ! isip $ip; then
-        echo "Invalid data from interface ${NAGIOS_IP}. ${ipdata}"
+        echo "Invalid data from interface ${SAMM_IP}. ${ipdata}"
         exit 1
     fi
-    NAGIOS_IP=${ip}
+    SAMM_IP=${ip}
     set -e
 fi
 
@@ -90,17 +95,20 @@ fi
 add-local-volume() {
     VOLNAME=$1
     VOLPATH=$2
-    if ! docker volume inspect $VOLNAME > /dev/null 2>&1; then
-        docker volume create $VOLNAME
+    if [ -n "$3" ]; then
+        TARGET=$3
     else
-        return 0
+        TARGET=$VOLPATH
     fi
-    if [ -L $VOLPATH ]; then
-        rm $VOLPATH
+    if ! docker volume inspect $VOLNAME > /dev/null 2>&1; then
+        docker volume create $VOLNAME > /dev/null 2>&1
     fi
-    mkdir -p ${VOLPATH%/*}
-    ln -s $(docker inspect $VOLNAME | jq -r .[0].Mountpoint) $VOLPATH
 
+    mkdir -p ${VOLPATH%/*}
+    if [ ! -L $VOLPATH ]; then
+        ln -s $(docker inspect $VOLNAME | jq -r .[0].Mountpoint) $VOLPATH
+    fi
+    echo "--mount source=${VOLNAME},target=${TARGET}"
 }
 
 set-key() {
@@ -145,14 +153,13 @@ else
     new=1
 fi
 
-add-local-volume nagios /usr/local/nagios
-add-local-volume ssmtp_etc /usr/local/ssmtp/etc
-add-local-volume apache_etc /usr/local/apache2/etc
-add-local-volume apache_log /usr/local/apache2/log
-add-local-volume apache_html /usr/local/apache2/html
-add-local-volume etcd_data /usr/local/etcd/var
-add-local-volume snmp_mibs /usr/local/snmp/mibs
-add-local-volume graphite /usr/local/graphite
+VOLUME_MOUNTS=$(add-local-volume nagios /usr/local/nagios)
+VOLUME_MOUNTS="${VOLUME_MOUNTS} $(add-local-volume ssmtp_etc /usr/local/ssmtp/etc /etc/ssmtp)"
+VOLUME_MOUNTS="${VOLUME_MOUNTS} $(add-local-volume apache_etc /usr/local/apache2/etc /etc/apache2)"
+VOLUME_MOUNTS="${VOLUME_MOUNTS} $(add-local-volume apache_log /usr/local/apache2/log /var/log/apache2)"
+VOLUME_MOUNTS="${VOLUME_MOUNTS} $(add-local-volume apache_html /usr/local/apache2/html /var/www/html)"
+VOLUME_MOUNTS="${VOLUME_MOUNTS} $(add-local-volume snmp_mibs /usr/local/snmp/mibs /usr/share/snmp/mibs)"
+VOLUME_MOUNTS="${VOLUME_MOUNTS} $(add-local-volume pnp4nagios /usr/local/pnp4nagios)"
 
 chmod o+x /var/lib/docker
 chmod o+x /var/lib/docker/volumes
@@ -161,45 +168,41 @@ SM_ID=$(docker ps -f name=sm -q)
 if [ "$SM_ID" == "" ]; then
     docker run -p 80:80 -p 443:443 \
         --restart=always \
-        --mount source=nagios,target=/usr/local/nagios \
-        --mount source=ssmtp_etc,target=/etc/ssmtp \
-        --mount source=apache_etc,target=/etc/apache2 \
-        --mount source=apache_log,target=/var/log/apache2 \
-        --mount source=apache_html,target=/var/www/html \
-        --mount source=snmp_mibs,target=/usr/share/snmp/mibs \
+        ${VOLUME_MOUNTS} \
         --name sm -it -d $IMAGE
 fi
 
+VOLUME_MOUNTS="${VOLUME_MOUNTS} $(add-local-volume etcd_data /usr/local/etcd/var /etcd-data)"
 ETCD_ID=$(docker ps -af name=etcd -q)
 if [ "$ETCD_ID" == "" ]; then
     docker run -d -p 2379:2379 \
         --restart=always \
-        --volume etcd_data:/etcd-data \
+        ${VOLUME_MOUNTS} \
         --name etcd ${REGISTRY}:${ETCDVERSION} \
         /usr/local/bin/etcd --data-dir /etcd-data --name node0 \
-        --advertise-client-urls http://${NAGIOS_IP}:2379,http://localhost:2379 \
+        --advertise-client-urls http://${SAMM_IP}:2379,http://localhost:2379 \
         --listen-client-urls http://0.0.0.0:2379 --max-snapshots 2 \
         --max-wals 5 --enable-v2 -auto-compaction-retention 1 \
         --snapshot-count 5000
 fi
 
-GRAPHITE_ID=$(docker ps -af name=graphite -q)
-if [ -z "${GRAPHITE_ID}" ]; then
-    docker run -d \
-         --name graphite \
-         --restart=always \
-         --mount source=graphite,target=/opt/graphite \
-         --env GRAPHITE_URL_ROOT=graphite \
-         -p 8080:80 \
-         -p 2003-2004:2003-2004 \
-         -p 2023-2024:2023-2024 \
-         -p 8125:8125/udp \
-         -p 8126:8126 \
-         graphiteapp/graphite-statsd
-fi
-GRAPH_CONF=$(docker inspect graphite \
-    | jq -r '.[0].Mounts[] | select(.Destination == "/opt/graphite/conf").Source')
-crudini --set ${GRAPH_CONF}/storage-aggregation.conf default_average xfilesfactor 0
+#GRAPHITE_ID=$(docker ps -af name=graphite -q)
+#if [ -z "${GRAPHITE_ID}" ]; then
+#    docker run -d \
+#         --name graphite \
+#         --restart=always \
+#         --mount source=graphite,target=/opt/graphite \
+#         --env GRAPHITE_URL_ROOT=graphite \
+#         -p 8080:80 \
+#         -p 2003-2004:2003-2004 \
+#         -p 2023-2024:2023-2024 \
+#         -p 8125:8125/udp \
+#         -p 8126:8126 \
+#         graphiteapp/graphite-statsd
+#fi
+#GRAPH_CONF=$(docker inspect graphite \
+#    | jq -r '.[0].Mounts[] | select(.Destination == "/opt/graphite/conf").Source')
+#crudini --set ${GRAPH_CONF}/storage-aggregation.conf default_average xfilesfactor 0
 
 if [ "$new" == "1" ]; then
 
@@ -222,11 +225,11 @@ if [ "$new" == "1" ]; then
     echo "# Path with authentication credentials for scripts" >> ${NAGIOS_REC}
     set-key ${NAGIOS_REC} \$USER9\$ /usr/local/nagios/etc/samananagios.pw
     echo "# Powershell script for citrix xa/xd monitoring" >> ${NAGIOS_REC}
-    set-key ${NAGIOS_REC} \$USER11\$ http://$NAGIOS_IP/samanamonctx.ps1
+    set-key ${NAGIOS_REC} \$USER11\$ http://$SAMM_IP/samanamonctx.ps1
     echo "# Powershell script for windows monitoring (legacy)" >> ${NAGIOS_REC}
-    set-key ${NAGIOS_REC} \$USER12\$ http://$NAGIOS_IP/samanamon.ps1
+    set-key ${NAGIOS_REC} \$USER12\$ http://$SAMM_IP/samanamon.ps1
     echo "# Etcd server URL (deprecated) is replaced by \$USER33\$" >> ${NAGIOS_REC}
-    set-key ${NAGIOS_REC} \$USER13\$ http://$NAGIOS_IP:2379
+    set-key ${NAGIOS_REC} \$USER13\$ http://$SAMM_IP:2379
     echo "# Slach domain" >> ${NAGIOS_REC}
     set-key ${NAGIOS_REC} \$USER14\$ $SLACK_DOMAIN
     echo "# Slach Tocken" >> ${NAGIOS_REC}
@@ -237,7 +240,7 @@ if [ "$new" == "1" ]; then
     set-key ${NAGIOS_REC} \$USER31\$
     echo "# Citrix Cloud API client_secret" >> ${NAGIOS_REC}
     set-key ${NAGIOS_REC} \$USER32\$
-    set-key ${NAGIOS_REC} \$USER33\$ ${NAGIOS_IP}:2379
+    set-key ${NAGIOS_REC} \$USER33\$ ${SAMM_IP}:2379
 
     PW_FILE=/usr/local/nagios/etc/samananagios.pw
     set-key ${PW_FILE} username ${NAGIOS_WMI_USER}
@@ -257,58 +260,56 @@ if [ "$new" == "1" ]; then
     set-key ${SSMTP_FILE} UseTLS YES
 
     NAGIOS_CFG=/usr/local/nagios/etc/nagios.cfg
-    GRAPHIOS_SPOOL=/usr/local/nagios/var/spool/graphios
-    mkdir -p ${GRAPHIOS_SPOOL}
-    chown nagios.nagios ${GRAPHIOS_SPOOL}
-    sed -i "/^cfg_dir=\/etc\/nagios\/objects$/d" ${NAGIOS_CFG}
-    set-key ${NAGIOS_CFG} process_performance_data 1
-    set-key ${NAGIOS_CFG} service_perfdata_file ${GRAPHIOS_SPOOL}/service-perfdata
-    set-key ${NAGIOS_CFG} service_perfdata_file_template DATATYPE::SERVICEPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tSERVICEDESC::\$SERVICEDESC\$\\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tSERVICESTATE::\$SERVICESTATE\$\\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\\tGRAPHITEPREFIX::\\tGRAPHITEPOSTFIX::
-    set-key ${NAGIOS_CFG} service_perfdata_file_mode a
-    set-key ${NAGIOS_CFG} service_perfdata_file_processing_interval 15
-    set-key ${NAGIOS_CFG} service_perfdata_file_processing_command process-service-perfdata-file-graphios
-    set-key ${NAGIOS_CFG} host_perfdata_file ${GRAPHIOS_SPOOL}/host-perfdata
-    set-key ${NAGIOS_CFG} host_perfdata_file_template DATATYPE::HOSTPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tHOSTPERFDATA::\$HOSTPERFDATA\$\\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tGRAPHITEPREFIX::\\tGRAPHITEPOSTFIX::
-    set-key ${NAGIOS_CFG} host_perfdata_file_mode a
-    set-key ${NAGIOS_CFG} host_perfdata_file_processing_interval 15
-    set-key ${NAGIOS_CFG} host_perfdata_file_processing_command process-host-perfdata-file-graphios
-    set +e
+    #GRAPHIOS_SPOOL=/usr/local/nagios/var/spool/graphios
+    #mkdir -p ${GRAPHIOS_SPOOL}
+    #chown nagios.nagios ${GRAPHIOS_SPOOL}
+    #sed -i "/^cfg_dir=\/etc\/nagios\/objects$/d" ${NAGIOS_CFG}
+    #set-key ${NAGIOS_CFG} process_performance_data 1
+    #set-key ${NAGIOS_CFG} service_perfdata_file ${GRAPHIOS_SPOOL}/service-perfdata
+    #set-key ${NAGIOS_CFG} service_perfdata_file_template DATATYPE::SERVICEPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tSERVICEDESC::\$SERVICEDESC\$\\tSERVICEPERFDATA::\$SERVICEPERFDATA\$\\tSERVICECHECKCOMMAND::\$SERVICECHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tSERVICESTATE::\$SERVICESTATE\$\\tSERVICESTATETYPE::\$SERVICESTATETYPE\$\\tGRAPHITEPREFIX::\\tGRAPHITEPOSTFIX::
+    #set-key ${NAGIOS_CFG} service_perfdata_file_mode a
+    #set-key ${NAGIOS_CFG} service_perfdata_file_processing_interval 15
+    #set-key ${NAGIOS_CFG} service_perfdata_file_processing_command process-service-perfdata-file-graphios
+    #set-key ${NAGIOS_CFG} host_perfdata_file ${GRAPHIOS_SPOOL}/host-perfdata
+    #set-key ${NAGIOS_CFG} host_perfdata_file_template DATATYPE::HOSTPERFDATA\\tTIMET::\$TIMET\$\\tHOSTNAME::\$HOSTNAME\$\\tHOSTPERFDATA::\$HOSTPERFDATA\$\\tHOSTCHECKCOMMAND::\$HOSTCHECKCOMMAND\$\\tHOSTSTATE::\$HOSTSTATE\$\\tHOSTSTATETYPE::\$HOSTSTATETYPE\$\\tGRAPHITEPREFIX::\\tGRAPHITEPOSTFIX::
+    #set-key ${NAGIOS_CFG} host_perfdata_file_mode a
+    #set-key ${NAGIOS_CFG} host_perfdata_file_processing_interval 15
+    #set-key ${NAGIOS_CFG} host_perfdata_file_processing_command process-host-perfdata-file-graphios
+    #set +e
 
-    GRAPHIOS_CFG=/usr/local/nagios/etc/graphios/graphios.cfg
-    crudini --set ${GRAPHIOS_CFG} graphios replacement_character  _
-    crudini --set ${GRAPHIOS_CFG} graphios spool_directory  ${GRAPHIOS_SPOOL}
-    crudini --set ${GRAPHIOS_CFG} graphios log_file  /usr/local/nagios/var/graphios.log
-    crudini --set ${GRAPHIOS_CFG} graphios log_max_size  25165824
-    crudini --set ${GRAPHIOS_CFG} graphios log_level  logging.INFO
-    crudini --set ${GRAPHIOS_CFG} graphios debug  False
-    crudini --set ${GRAPHIOS_CFG} graphios sleep_time  15
-    crudini --set ${GRAPHIOS_CFG} graphios sleep_max  480
-    crudini --set ${GRAPHIOS_CFG} graphios test_mode  False
-    crudini --set ${GRAPHIOS_CFG} graphios use_service_desc  True
-    crudini --set ${GRAPHIOS_CFG} graphios replace_hostname  True
-    crudini --set ${GRAPHIOS_CFG} graphios reverse_hostname  False
-    crudini --set ${GRAPHIOS_CFG} graphios enable_carbon  True
-    crudini --set ${GRAPHIOS_CFG} graphios carbon_plaintext  False
-    crudini --set ${GRAPHIOS_CFG} graphios carbon_servers  $NAGIOS_IP:2004
-    crudini --set ${GRAPHIOS_CFG} graphios enable_statsd  False
-    crudini --set ${GRAPHIOS_CFG} graphios statsd_server  127.0.0.1:8125
-    crudini --set ${GRAPHIOS_CFG} graphios enable_librato  False
-    crudini --set ${GRAPHIOS_CFG} graphios librato_whitelist  [".*"]
-    crudini --set ${GRAPHIOS_CFG} graphios enable_stdout  False
-    crudini --set ${GRAPHIOS_CFG} graphios nerf_stdout  True
+    #GRAPHIOS_CFG=/usr/local/nagios/etc/graphios/graphios.cfg
+    #crudini --set ${GRAPHIOS_CFG} graphios replacement_character  _
+    #crudini --set ${GRAPHIOS_CFG} graphios spool_directory  ${GRAPHIOS_SPOOL}
+    #crudini --set ${GRAPHIOS_CFG} graphios log_file  /usr/local/nagios/var/graphios.log
+    #crudini --set ${GRAPHIOS_CFG} graphios log_max_size  25165824
+    #crudini --set ${GRAPHIOS_CFG} graphios log_level  logging.INFO
+    #crudini --set ${GRAPHIOS_CFG} graphios debug  False
+    #crudini --set ${GRAPHIOS_CFG} graphios sleep_time  15
+    #crudini --set ${GRAPHIOS_CFG} graphios sleep_max  480
+    #crudini --set ${GRAPHIOS_CFG} graphios test_mode  False
+    #crudini --set ${GRAPHIOS_CFG} graphios use_service_desc  True
+    #crudini --set ${GRAPHIOS_CFG} graphios replace_hostname  True
+    #crudini --set ${GRAPHIOS_CFG} graphios reverse_hostname  False
+    #crudini --set ${GRAPHIOS_CFG} graphios enable_carbon  True
+    #crudini --set ${GRAPHIOS_CFG} graphios carbon_plaintext  False
+    #crudini --set ${GRAPHIOS_CFG} graphios carbon_servers  $SAMM_IP:2004
+    #crudini --set ${GRAPHIOS_CFG} graphios enable_statsd  False
+    #crudini --set ${GRAPHIOS_CFG} graphios statsd_server  127.0.0.1:8125
+    #crudini --set ${GRAPHIOS_CFG} graphios enable_librato  False
+    #crudini --set ${GRAPHIOS_CFG} graphios librato_whitelist  [".*"]
+    #crudini --set ${GRAPHIOS_CFG} graphios enable_stdout  False
+    #crudini --set ${GRAPHIOS_CFG} graphios nerf_stdout  True
 
-    sed -i -e "s/%NAGIOS_IP%/${NAGIOS_IP}/" \
-        /usr/local/apache2/etc/conf-available/graphite.conf
-    sed -i -e '/service_description\s\+SSH/a\    register        0' \
-        /usr/local/nagios/etc/objects/localhost.cfg
+    #sed -i -e "s/%SAMM_IP%/${SAMM_IP}/" \
+    #    /usr/local/apache2/etc/conf-available/graphite.conf
 fi
-cd /usr/src
-if [ ! -d /usr/src/check_samana ]; then
-    git clone https://github.com/samanamonitor/check_samana.git
-else
-    cd check_samana
-    git pull
-fi
-apt install -y make
-make -C /usr/src/check_samana
-make -C /usr/src/check_samana install
+#cd /usr/src
+#if [ ! -d /usr/src/check_samana ]; then
+#    git clone https://github.com/samanamonitor/check_samana.git
+#else
+#    cd check_samana
+#    git pull
+#fi
+#apt install -y make
+#make -C /usr/src/check_samana
+#make -C /usr/src/check_samana install

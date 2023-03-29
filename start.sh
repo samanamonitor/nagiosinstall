@@ -35,15 +35,22 @@ while [ $r -gt 0 ]; do
     fi
 done
 
-service graphios start
-sleep 5
-
-if [ -x /usr/local/nagios/libexec/sammworker.py ]; then
-    /usr/local/nagios/libexec/sammworker.py
-    sleep 5
-    if [ ! -f /run/sammworker_process.pid ]; then
-        echo "SAMM Worker didn't start. Continuing." >&2
-    fi
+if dpkg-query --status samm-pnp4nagios >/dev/null 2>&1; then
+    service npcd start
 fi
+
+if dpkg-query --status samm-graphios >/dev/null 2>&1; then
+    service graphios start
+fi
+
+#sleep 5
+#
+#if [ -x /usr/local/nagios/libexec/sammworker.py ]; then
+#    /usr/local/nagios/libexec/sammworker.py
+#    sleep 5
+#    if [ ! -f /run/sammworker_process.pid ]; then
+#        echo "SAMM Worker didn't start. Continuing." >&2
+#    fi
+#fi
 
 tail -f /usr/local/nagios/var/nagios.log

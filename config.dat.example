@@ -18,7 +18,7 @@ SAMM_PWD=set-password
 DIST=ubuntu
 
 # Set image URL to download tarball and image name
-IMAGE_URL="https://samm-repo.s3.amazonaws.com/samm-repo/images/samm_v1.0.0.tar.gz" # s3 url to samm docker image
+IMAGE_URL="https://samm-repo.s3.amazonaws.com/images/samm_v1.0.0.tar.gz" # s3 url to samm docker image
 IMAGE=samm:v1.0.0
 
 # Set SNMP community for monitoring components

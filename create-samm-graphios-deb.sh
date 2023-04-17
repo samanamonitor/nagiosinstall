@@ -71,3 +71,4 @@ EOF
 
 dpkg --build ${BUILD_DIR}
 
+mv /usr/src/${PACKAGE_NAME}*.deb ${DIR}/apt-repo/pool/main/${VERSION_CODENAME}

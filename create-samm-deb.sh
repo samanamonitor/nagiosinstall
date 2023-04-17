@@ -174,4 +174,4 @@ chmod 0755 ${BUILD_DIR}/DEBIAN/preinst
 
 dpkg --build ${BUILD_DIR}
 
-mv ${BUILD_DIR}.deb ${DIR}
+mv /usr/src/${PACKAGE_NAME}*.deb ${DIR}/apt-repo/pool/main/${VERSION_CODENAME}

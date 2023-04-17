@@ -6,3 +6,4 @@ build_config.dat
 *.log
 Dockerfile.build
 Dockerfile.install
+.DS_Store

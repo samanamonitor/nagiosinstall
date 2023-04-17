@@ -19,7 +19,8 @@ common_depends="libc6 (>= 2.15), samm, libldap-common, libkrb5-3, \
 iputils-ping, smbclient, snmp, libdbi1, \
 libpq5, dnsutils, fping, libnet-snmp-perl, libcrypt-x509-perl, \
 libdatetime-format-dateparse-perl, libtext-glob-perl, \
-libwww-perl, ssh-client"
+libwww-perl, libmonitoring-plugin-perl, ssh-client, \
+libjson-perl"
 
 bionic_depends="libssl1.1 (>= 1.1.0), libmysqlclient20, ${common_depends}"
 
@@ -88,4 +89,4 @@ EOF
 
 dpkg --build ${BUILD_DIR}
 
-mv ${BUILD_DIR}.deb ${DIR}
+mv /usr/src/${PACKAGE_NAME}*.deb ${DIR}/apt-repo/pool/main/${VERSION_CODENAME}

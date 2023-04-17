@@ -2,7 +2,7 @@
 
 set -x
 
-DIST=$1
+. /etc/os-release
 
 do_hash() {
     HASH_NAME=$1
@@ -21,8 +21,8 @@ if [ ! -d gpg ]; then
     mkdir gpg
 fi
 
-if [ ! -d apt-repo/pool/main/${DIST} ]; then
-    echo "Directory containing packages is missing (apt-repo/pool/main/${DIST})" >&2
+if [ ! -d apt-repo/pool/main/${VERSION_CODENAME} ]; then
+    echo "Directory containing packages is missing (apt-repo/pool/main/${VERSION_CODENAME})" >&2
     exit 1
 fi
 
@@ -43,16 +43,16 @@ if [ "0" != "$?" ]; then
 fi
 cp gpg/pgp-key.public apt-repo/pgp-samm-key.public
 
-mkdir -p apt-repo/dists/${DIST}/main/binary-amd64
+mkdir -p apt-repo/dists/${VERSION_CODENAME}/main/binary-amd64
 cd apt-repo
-dpkg-scanpackages --arch amd64 pool/ > dists/${DIST}/main/binary-amd64/Packages
-cat dists/${DIST}/main/binary-amd64/Packages | gzip -9 > dists/${DIST}/main/binary-amd64/Packages.gz
-cd dists/${DIST}
+dpkg-scanpackages --arch amd64 pool/ > dists/${VERSION_CODENAME}/main/binary-amd64/Packages
+cat dists/${VERSION_CODENAME}/main/binary-amd64/Packages | gzip -9 > dists/${VERSION_CODENAME}/main/binary-amd64/Packages.gz
+cd dists/${VERSION_CODENAME}
 cat << EOF > Release
 Origin: Samana Monitor Repository
 Label: SAMM
-Suite: ${DIST}
-Codename: ${DIST}
+Suite: ${VERSION_CODENAME}
+Codename: ${VERSION_CODENAME}
 Version: 1.0.0
 Architectures: amd64
 Components: main

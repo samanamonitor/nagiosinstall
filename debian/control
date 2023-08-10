@@ -1,0 +1,8 @@
+Package: samm-common
+Version: 1.0.0
+Maintainer: Samana <info@samanagroup.com>
+Depends: samm, samm-check-samana, samm-check-winrm, samm-plugins, samm-pnp4nagios, samm-pynag, samm-pysamana, samm-pysammwr, samm-pywmi, samm-nrpe
+Conflicts: 
+Architecture: amd64
+Homepage: https://www.samanagroup.com
+Description: SAMM meta-package that includes all the components. Samana Advanced Monitoring and Management

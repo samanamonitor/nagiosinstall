@@ -8,3 +8,5 @@ Dockerfile.build
 Dockerfile.install
 .DS_Store
 apt-repo/*
+gpg/*
+temp/*

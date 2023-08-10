@@ -6,6 +6,9 @@ set -xe
 
 . /etc/os-release
 
+apt update
+apt upgrade -y
+
 CHECK_SAMANA_GIT=https://github.com/samanamonitor/check_samana.git
 
 PACKAGE_NAME=samm-check-samana

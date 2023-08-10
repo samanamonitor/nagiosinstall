@@ -13,7 +13,7 @@ NAGIOS_GID=5001
 NAGCMD_GID=5002
 NAGIOS_URL=https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.8.tar.gz
 
-VERSION=1.0.0
+VERSION=1.0.1
 PACKAGE_NAME=samm
 TEMPDIR=/usr/src/build
 PREFIX=/usr/local
@@ -45,6 +45,7 @@ else
 fi
 
 LIBS="wget apache2 build-essential libgd-dev unzip libapache2-mod-php libssl-dev ssmtp"
+apt update
 DEBIAN_FRONTEND="noninteractive" apt install -y $LIBS
 
 if [ ! -d ${TEMPDIR} ]; then

@@ -11,7 +11,7 @@ wget -O ${KEYPATH} https://samm-repo.s3.amazonaws.com/pgp-samm-key.public
 echo "deb [arch=amd64 signed-by=${KEYPATH}] https://samm-repo.s3.amazonaws.com ${UBUNTU_CODENAME} main" \
     > /etc/apt/sources.list.d/samm.list
 apt update
-apt install -y samm samm-plugins samm-check-samana samm samm-check-winrm samm-pynag samm-pnp4nagios
+apt install -y samm-common
 apt clean
 rm $(find /var/lib/apt/lists/ -type f )
 > /var/log/alternatives.log

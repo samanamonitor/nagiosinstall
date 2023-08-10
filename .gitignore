@@ -7,3 +7,4 @@ build_config.dat
 Dockerfile.build
 Dockerfile.install
 .DS_Store
+apt-repo/*

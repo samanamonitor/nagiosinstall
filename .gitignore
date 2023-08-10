@@ -10,3 +10,4 @@ Dockerfile.install
 apt-repo/*
 gpg/*
 temp/*
+*.private
